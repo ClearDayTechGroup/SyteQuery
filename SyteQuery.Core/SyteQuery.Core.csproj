@@ -27,8 +27,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
-		<PackageReference Include="Cronos" Version="0.11.1" />
-		<PackageReference Include="MailKit" Version="4.18.1" />
 		<!-- Full package (not just .Abstractions) for the AddDataProtection() extension method
          itself. This is fine to use outside ASP.NET Core, despite the package name -
          Microsoft documents this exact scenario ("Data Protection in non-ASP.NET Core apps"). -->

@@ -1,12 +1,378 @@
-﻿<Window x:Class="SyteQuery.Desktop.MainWindow"
+<Window x:Class="SyteQuery.Desktop.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SyteQuery.Desktop"
+        xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
+        xmlns:controls="clr-namespace:SyteQuery.Desktop.Controls"
+        xmlns:queryEditor="clr-namespace:SyteQuery.Desktop.QueryEditor"
+        xmlns:results="clr-namespace:SyteQuery.Desktop.Results"
+        xmlns:snippets="clr-namespace:SyteQuery.Desktop.Snippets"
+        xmlns:history="clr-namespace:SyteQuery.Desktop.History"
+        xmlns:models="clr-namespace:SyteQuery.Features.ObjectExplorer.Models;assembly=SyteQuery.Core"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="SyteQuery" Height="800" Width="1280" FontSize="13"
+        Icon="/Assets/SyteQuery.ico"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
-    </Grid>
+        <!-- The Fluent ListBoxItem style binds HorizontalContentAlignment to its parent ItemsControl;
+             while an item is being created (before it is attached to the list) that lookup fails and
+             shows up as a "Cannot find source ... ItemsControl" binding failure. Setting the value
+             explicitly here means nothing is left to look up. Lists reference it with
+             DynamicResource so it also resolves from UserControls (e.g. the Snippets panel). -->
+        <Style x:Key="StretchListBoxItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Messages are a log: one tight line each, no Fluent list-item padding/min-height. -->
+        <Style x:Key="CompactListBoxItem" TargetType="ListBoxItem" BasedOn="{StaticResource StretchListBoxItem}">
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <!-- Object Explorer icons: outline vector shapes on a 24x24 grid (instead of emoji), colored
+             per object type. Hand-drawn rather than an icon font so they render identically on
+             Windows 10/11 and need no font dependency. -->
+        <Geometry x:Key="IconDatabase">M4,6 C4,4.3 7.6,3 12,3 C16.4,3 20,4.3 20,6 C20,7.7 16.4,9 12,9 C7.6,9 4,7.7 4,6 Z M4,6 L4,18 C4,19.7 7.6,21 12,21 C16.4,21 20,19.7 20,18 L20,6 M4,12 C4,13.7 7.6,15 12,15 C16.4,15 20,13.7 20,12</Geometry>
+        <Geometry x:Key="IconFolder">M3,5 L9,5 L11,8 L21,8 L21,19 L3,19 Z</Geometry>
+        <Geometry x:Key="IconTable">M3,4 L21,4 L21,20 L3,20 Z M3,10 L21,10 M3,15 L21,15 M9,10 L9,20</Geometry>
+        <Geometry x:Key="IconView">M2,12 C5,6 19,6 22,12 C19,18 5,18 2,12 Z M12,9 A3,3 0 1 0 12,15 A3,3 0 1 0 12,9 Z</Geometry>
+        <Geometry x:Key="IconProcedure">M3,5 L21,5 L21,19 L3,19 Z M7,10 L10,12 L7,14 M12,15 L17,15</Geometry>
+        <Geometry x:Key="IconFunction">M16,4 C12.5,4 11.5,5.5 11.5,8 L11.5,17 C11.5,19.5 10.5,20 8,20 M8,10 L16,10</Geometry>
+        <Geometry x:Key="IconColumn">M8,3 L16,3 L16,21 L8,21 Z</Geometry>
+        <Geometry x:Key="IconKey">M8,9 A3.5,3.5 0 1 0 8,16 A3.5,3.5 0 1 0 8,9 Z M11.5,12.5 L21,12.5 M18,12.5 L18,16 M21,12.5 L21,15</Geometry>
+        <Geometry x:Key="IconTrigger">M13,2 L5,13 L11,13 L10,22 L19,10 L12.5,10 Z</Geometry>
+        <Geometry x:Key="IconInfo">M12,3 A9,9 0 1 0 12,21 A9,9 0 1 0 12,3 Z M12,11 L12,16 M12,7.5 L12,8.5</Geometry>
+
+        <SolidColorBrush x:Key="IconBlue" Color="#4F9DDF" />
+        <SolidColorBrush x:Key="IconAmber" Color="#D9A441" />
+        <SolidColorBrush x:Key="IconPurple" Color="#A184DB" />
+        <SolidColorBrush x:Key="IconGreen" Color="#5CB270" />
+        <SolidColorBrush x:Key="IconOrange" Color="#E58A4E" />
+
+        <Style x:Key="TreeNodeIconPath" TargetType="Path">
+            <Setter Property="StrokeThickness" Value="1.7" />
+            <Setter Property="StrokeLineJoin" Value="Round" />
+            <Setter Property="StrokeStartLineCap" Value="Round" />
+            <Setter Property="StrokeEndLineCap" Value="Round" />
+            <Setter Property="Data" Value="{StaticResource IconFolder}" />
+            <Setter Property="Stroke" Value="{StaticResource IconAmber}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NodeType}" Value="Root">
+                    <Setter Property="Data" Value="{StaticResource IconDatabase}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconBlue}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="SchemaFolder">
+                    <Setter Property="Data" Value="{StaticResource IconFolder}" />
+                    <Setter Property="Stroke" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="Table">
+                    <Setter Property="Data" Value="{StaticResource IconTable}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconBlue}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="View">
+                    <Setter Property="Data" Value="{StaticResource IconView}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconPurple}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="StoredProcedure">
+                    <Setter Property="Data" Value="{StaticResource IconProcedure}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconGreen}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="Function">
+                    <Setter Property="Data" Value="{StaticResource IconFunction}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconOrange}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="Column">
+                    <Setter Property="Data" Value="{StaticResource IconColumn}" />
+                    <Setter Property="Stroke" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DataTrigger>
+                <!-- Primary-key columns: the view model marks them with the key emoji as their Icon. -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding NodeType}" Value="Column" />
+                        <Condition Binding="{Binding Icon}" Value="🔑" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Data" Value="{StaticResource IconKey}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconAmber}" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="Trigger">
+                    <Setter Property="Data" Value="{StaticResource IconTrigger}" />
+                    <Setter Property="Stroke" Value="{StaticResource IconAmber}" />
+                </DataTrigger>
+                <!-- "(no columns found)" etc.: a Folder-typed node with nothing to expand. -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding NodeType}" Value="Folder" />
+                        <Condition Binding="{Binding CanExpand}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Data" Value="{StaticResource IconInfo}" />
+                    <Setter Property="Stroke" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TreeNodeTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NodeType}" Value="Root">
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeType}" Value="Column">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <HierarchicalDataTemplate x:Key="ObjectExplorerNodeTemplate" DataType="{x:Type models:TreeNode}" ItemsSource="{Binding Children}">
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                <Viewbox Width="16" Height="16" Margin="0,0,7,0" VerticalAlignment="Center">
+                    <Canvas Width="24" Height="24">
+                        <Path Style="{StaticResource TreeNodeIconPath}" />
+                    </Canvas>
+                </Viewbox>
+                <TextBlock Text="{Binding Text}" Style="{StaticResource TreeNodeTextStyle}" />
+                <ProgressBar IsIndeterminate="True" Width="12" Height="12" Margin="8,0,0,0"
+                             Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </HierarchicalDataTemplate>
+
+        <!-- Expand/collapse chevron. The default TreeViewItem template only shows its
+             expander once the item already has children, but Object Explorer loads children
+             lazily on first expand - so every collapsed node would look like a leaf. This
+             template shows the chevron based on TreeNode.CanExpand instead (same rule the
+             old web version's IsFolder() used), and keeps the space reserved when hidden so
+             icons stay aligned. -->
+        <Style x:Key="ExpanderToggleStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border Background="Transparent" Width="16" Height="16">
+                            <Path x:Name="Chevron" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M 0,0 L 4,4 L 0,8 Z"
+                                  Fill="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Chevron" Property="Data" Value="M 0,4 L 8,4 L 4,8 Z" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chevron" Property="Fill" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CanExpand}" Value="False">
+                    <Setter Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ObjectExplorerItemStyle" TargetType="{x:Type TreeViewItem}">
+            <!-- An explicit item style replaces the Fluent theme's own, which is what normally
+                 supplies the text color - without this the labels fall back to black and
+                 vanish in dark mode. -->
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <!-- Two-way so a manual expand/collapse (chevron or double-click) stays in sync
+                 with TreeNode.IsExpanded - otherwise a user toggle would silently break the
+                 binding and search's auto-expand would stop working on that node. No feedback
+                 loop: EnsureChildrenLoadedAsync never writes IsExpanded back. -->
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVis}}" />
+            <!-- WPF's TreeView doesn't virtualize by default, and an explicit item style
+                 replaces the theme's (so the nested panel falls back to a plain StackPanel
+                 too). Without this, expanding a schema folder with thousands of objects
+                 realizes a TreeViewItem (plus its template/ProgressBar) for every one of
+                 them on the UI thread - which looks like a hang even though the data was
+                 already in memory. -->
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                        <StackPanel>
+                            <Border x:Name="Bd" Background="Transparent" SnapsToDevicePixels="True" CornerRadius="4" Margin="0,1" Padding="0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <ToggleButton x:Name="Expander"
+                                                  Style="{StaticResource ExpanderToggleStyle}"
+                                                  IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                  ClickMode="Press" />
+                                    <ContentPresenter x:Name="PART_Header" ContentSource="Header"
+                                                      VerticalAlignment="Center" Margin="2,0,4,0" />
+                                </StackPanel>
+                            </Border>
+                            <ItemsPresenter x:Name="ItemsHost" Margin="16,0,0,0" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="False">
+                                <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True" />
+                                    <Condition Property="Selector.IsSelectionActive" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <DockPanel LastChildFill="True">
+
+        <!-- Menu -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New Query" InputGestureText="Ctrl+N" Click="OnNewQueryClick" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="OnExitClick" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Format Query" IsEnabled="False" />
+                <MenuItem Header="_Comment Selection" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Object Explorer" IsEnabled="False" />
+                <MenuItem Header="_Results" IsEnabled="False" />
+                <MenuItem Header="_Messages" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="_Theme">
+                    <MenuItem x:Name="ThemeSystemItem" Header="_System default" Tag="System" Click="OnThemeClick" />
+                    <MenuItem x:Name="ThemeLightItem" Header="_Light" Tag="Light" Click="OnThemeClick" />
+                    <MenuItem x:Name="ThemeDarkItem" Header="_Dark" Tag="Dark" Click="OnThemeClick" />
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Environments..." Click="OnEnvironmentsClick" />
+                <MenuItem Header="_Settings..." IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="Check for _Updates..." Click="OnCheckForUpdatesClick" />
+                <Separator />
+                <MenuItem Header="_About SyteQuery..." Click="OnAboutClick" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource PanelStatusBorder}">
+            <DockPanel LastChildFill="True">
+                <!-- Background metadata loading progress; only shown while something is loading. -->
+                <ProgressBar DockPanel.Dock="Right" Width="140" Height="5" Maximum="1" Margin="12,0,0,0"
+                             VerticalAlignment="Center"
+                             Value="{Binding Preload.Fraction, Mode=OneWay}"
+                             Visibility="{Binding Preload.IsBusy, Converter={StaticResource BoolToVis}}" />
+                <TextBlock x:Name="StatusText" Text="{Binding Preload.StatusText}" Style="{StaticResource SecondaryText}"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <!-- Docking layout: Object Explorer (left) / Editor (center) / Results+Messages (bottom) -->
+        <avalonDock:DockingManager x:Name="DockManager">
+            <avalonDock:LayoutRoot>
+                <avalonDock:LayoutPanel Orientation="Horizontal">
+
+                    <avalonDock:LayoutAnchorablePane DockWidth="280">
+                        <avalonDock:LayoutAnchorable Title="Object Explorer" CanClose="False" CanAutoHide="True">
+                            <DockPanel LastChildFill="True" DataContext="{Binding ObjectExplorerViewModel, RelativeSource={RelativeSource AncestorType=Window}}">
+
+                                <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6" LastChildFill="True">
+                                    <ToggleButton DockPanel.Dock="Right" Margin="6,0,0,0" Padding="8,2"
+                                                  IsChecked="{Binding UseStartsWith}"
+                                                  ToolTip="Toggle: Contains / Starts With">
+                                        <TextBlock Text="{Binding UseStartsWith, Converter={x:Static local:StartsWithLabelConverter.Instance}}" FontSize="10" />
+                                    </ToggleButton>
+                                    <Button DockPanel.Dock="Right" Margin="6,0,0,0" Padding="9,2" Content="⟳"
+                                            Click="OnObjectExplorerRefreshClick" ToolTip="Refresh" />
+                                    <controls:SearchBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Placeholder="Search objects..." />
+                                </DockPanel>
+
+                                <TreeView ItemsSource="{Binding Roots}"
+                                          ItemContainerStyle="{StaticResource ObjectExplorerItemStyle}"
+                                          ItemTemplate="{StaticResource ObjectExplorerNodeTemplate}"
+                                          TreeViewItem.Expanded="OnObjectExplorerItemExpanded"
+                                          PreviewMouseLeftButtonUp="OnObjectExplorerMouseUp"
+                                          VirtualizingPanel.IsVirtualizing="True"
+                                          ScrollViewer.CanContentScroll="True"
+                                          BorderThickness="0" />
+
+                            </DockPanel>
+                        </avalonDock:LayoutAnchorable>
+                    </avalonDock:LayoutAnchorablePane>
+
+                    <avalonDock:LayoutPanel Orientation="Vertical">
+
+                        <!-- Query tabs are created in code (MainWindow.OpenQueryTab): one per query, plus one per
+                             object definition/script opened from Object Explorer, like the web version. -->
+                        <avalonDock:LayoutDocumentPane x:Name="DocumentPane" />
+
+                        <avalonDock:LayoutAnchorablePane DockHeight="220">
+                            <avalonDock:LayoutAnchorable Title="Results" CanClose="False" CanAutoHide="True">
+                                <results:ResultsGridView
+                                    DataContext="{Binding ResultsGridViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            </avalonDock:LayoutAnchorable>
+                            <avalonDock:LayoutAnchorable Title="Messages" CanClose="False" CanAutoHide="True">
+                                <ListBox Margin="4" BorderThickness="0" Background="Transparent"
+                                    ItemContainerStyle="{DynamicResource CompactListBoxItem}"
+                                    DataContext="{Binding ActiveQueryEditor, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ItemsSource="{Binding Messages}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </avalonDock:LayoutAnchorable>
+                        </avalonDock:LayoutAnchorablePane>
+
+                    </avalonDock:LayoutPanel>
+
+                    <avalonDock:LayoutAnchorablePane DockWidth="240">
+                        <avalonDock:LayoutAnchorable Title="Snippets" CanClose="False" CanAutoHide="True">
+                            <snippets:SnippetsPanelView
+                                DataContext="{Binding SnippetsPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </avalonDock:LayoutAnchorable>
+                        <avalonDock:LayoutAnchorable Title="History" CanClose="False" CanAutoHide="True">
+                            <history:HistoryPanelView
+                                DataContext="{Binding HistoryPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </avalonDock:LayoutAnchorable>
+                    </avalonDock:LayoutAnchorablePane>
+
+                </avalonDock:LayoutPanel>
+            </avalonDock:LayoutRoot>
+        </avalonDock:DockingManager>
+
+    </DockPanel>
 </Window>

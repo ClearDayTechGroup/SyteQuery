@@ -1,0 +1,48 @@
+<UserControl x:Class="SyteQuery.Desktop.History.HistoryPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:SyteQuery.Desktop.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="240">
+    <DockPanel LastChildFill="True">
+
+        <controls:SearchBox DockPanel.Dock="Top" Margin="4,4,4,6"
+                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                            Placeholder="Search history..." />
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="4">
+            <TextBlock Text="{Binding StatusText}" Style="{StaticResource SecondaryText}" Margin="2,0,0,6" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Clear all" Click="OnClearAllClick" Margin="0,0,4,0" Padding="6,2" />
+                <Button Content="Delete" Click="OnDeleteClick" Margin="0,0,4,0" Padding="6,2" />
+                <Button Content="Load" Click="OnLoadClick" Padding="6,2" FontWeight="Bold" />
+            </StackPanel>
+        </StackPanel>
+
+        <ListBox x:Name="List" ItemsSource="{Binding Items}" BorderThickness="0" Margin="0,0,0,4"
+                 ItemContainerStyle="{DynamicResource StretchListBoxItem}"
+                 MouseDoubleClick="OnListDoubleClick">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="4,3">
+                        <TextBlock Text="{Binding Preview}" FontFamily="Cascadia Mono, Consolas" FontSize="12"
+                                   TextWrapping="Wrap" MaxHeight="48" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Margin="0,2,0,0" FontSize="11">
+                            <Run Text="{Binding WhenText, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <Run Text="  -  " Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <Run x:Name="DetailRun" Text="{Binding Detail, Mode=OneWay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                            <Setter TargetName="DetailRun" Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+    </DockPanel>
+</UserControl>

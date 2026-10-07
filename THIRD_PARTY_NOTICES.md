@@ -8,10 +8,8 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 |---|---|---|---|
 | AvalonEdit | 6.3.1.120 | MIT | http://www.avalonedit.net/ |
 | ClosedXML | 0.105.0 | MIT | https://github.com/ClosedXML/ClosedXML |
-| Cronos | 0.11.1 | MIT | https://github.com/HangfireIO/Cronos |
 | Dirkster.AvalonDock | 4.72.0 | Ms-PL | https://github.com/Dirkster99/AvalonDock |
 | Dirkster.AvalonDock.Themes.VS2013 | 4.72.0 | Ms-PL | https://github.com/Dirkster99/AvalonDock |
-| MailKit | 4.18.1 | MIT | http://www.mimekit.net/ |
 | Microsoft.AspNetCore.DataProtection | 9.0.0 | MIT | https://asp.net/ |
 | Microsoft.EntityFrameworkCore.Sqlite | 9.0.0 | MIT | https://docs.microsoft.com/ef/core/ |
 | Microsoft.Extensions.Hosting | 9.0.0 | MIT | https://dot.net/ |
@@ -27,20 +25,16 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 | Package | Version | License |
 |---|---|---|
 | AvalonEdit | 6.3.1.120 | MIT |
-| BouncyCastle.Cryptography | 2.7.0 | MIT |
 | ClosedXML | 0.105.0 | MIT |
 | ClosedXML.Parser | 2.0.0 | MIT |
-| Cronos | 0.11.1 | MIT |
 | Dirkster.AvalonDock | 4.72.0 | Ms-PL |
 | Dirkster.AvalonDock.Themes.VS2013 | 4.72.0 | Ms-PL |
 | DocumentFormat.OpenXml | 3.1.1 | MIT |
 | DocumentFormat.OpenXml.Framework | 3.1.1 | MIT |
 | ExcelNumberFormat | 1.1.0 | MIT |
-| MailKit | 4.18.1 | MIT |
 | Microsoft.AspNetCore.Cryptography.Internal | 9.0.0 | MIT |
 | Microsoft.AspNetCore.DataProtection | 9.0.0 | MIT |
 | Microsoft.AspNetCore.DataProtection.Abstractions | 9.0.0 | MIT |
-| Microsoft.Bcl.Cryptography | 10.0.0 | MIT |
 | Microsoft.Data.Sqlite.Core | 9.0.0 | MIT |
 | Microsoft.EntityFrameworkCore | 9.0.0 | MIT |
 | Microsoft.EntityFrameworkCore.Abstractions | 9.0.0 | MIT |
@@ -80,7 +74,6 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 | Microsoft.Extensions.Options.ConfigurationExtensions | 9.0.0 | MIT |
 | Microsoft.Extensions.Primitives | 9.0.0 | MIT |
 | Microsoft.SqlServer.TransactSql.ScriptDom | 170.147.0 | MIT |
-| MimeKit | 4.18.1 | MIT |
 | Newtonsoft.Json | 13.0.3 | MIT |
 | RBush.Signed | 4.0.0 | MIT |
 | SixLabors.Fonts | 1.0.0 | Apache-2.0 |
@@ -89,10 +82,9 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 | SQLitePCLRaw.lib.e_sqlite3 | 2.1.13 | Apache-2.0 |
 | SQLitePCLRaw.provider.e_sqlite3 | 2.1.13 | Apache-2.0 |
 | System.Diagnostics.EventLog | 9.0.0 | MIT |
-| System.Formats.Asn1 | 10.0.0 | MIT |
 | System.IO.Packaging | 8.0.1 | MIT |
 | System.Memory | 4.5.3 | https://github.com/dotnet/corefx/blob/master/LICENSE.TXT |
-| System.Security.Cryptography.Pkcs | 10.0.0 | MIT |
+| System.Security.Cryptography.Pkcs | 9.0.20 | MIT |
 | System.Security.Cryptography.Xml | 9.0.20 | MIT |
 | System.Text.Json | 9.0.0 | MIT |
 | Velopack | 1.2.161 | MIT |

@@ -35,7 +35,7 @@ Browse every table, view, stored procedure and function across your environments
 
 SyteQuery talks to SyteLine through Infor's documented **IDO REST v2 API** (`/IDORequestService/ido/...`) — no proprietary client libraries. It authenticates with the environment's own security token endpoint and calls IDO methods over HTTPS.
 
-To run SQL it uses one small custom IDO, **`ue_RC_QueryTool`**, installed on each SyteLine environment: its `ExecuteQuery` method runs the command you send and returns the rows as JSON. When you add an environment, SyteQuery checks that the IDO is present. The source for this IDO will be published in this repository so you can review exactly what runs on your server before installing it.
+To run SQL it uses one small custom IDO that **you install once in each SyteLine environment**: its `ExecuteQuery` method runs the command SyteQuery sends and returns the rows as JSON. SyteQuery never installs anything on your server for you — the IDO's source, build steps and install instructions are in [`SyteQuery.IDO/`](SyteQuery.IDO/README.md), so you can read exactly what will run before you save it into SyteLine. When you add an environment you give SyteQuery the IDO's name, and it checks the IDO end to end (it runs a harmless `SELECT 1` through it) and tells you what to fix if anything is off.
 
 Metadata (the object lists, columns, triggers) is read from SQL Server's catalog views through the same IDO and cached in memory per environment.
 
@@ -43,13 +43,17 @@ Metadata (the object lists, columns, triggers) is read from SQL Server's catalog
 
 - Windows 10 or 11 (x64)
 - An Infor SyteLine / CloudSuite Industrial environment with the IDO REST service reachable from your PC
-- A SyteLine user with permission to call IDOs (and the `ue_RC_QueryTool` IDO installed — see above)
+- A SyteLine user with permission to call IDOs, and the query IDO compiled and installed in the environment (assembly in the IDO Extension Class Assemblies form, bound to a new IDO) — see [`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md)
 
 ## Install
 
+> **Prerequisite — set up the query IDO first.** SyteQuery can't connect to an environment until its query IDO has been compiled and installed in SyteLine (see [Setting up an environment](#setting-up-an-environment) below). Installing the app alone isn't enough: adding an environment fails its connection check until the IDO exists.
+
 Download the latest `ClearDay.SyteQuery-win-Setup.exe` from [Releases](../../releases) and run it. It installs per user (no administrator rights needed) and the .NET runtime is included. The installer isn't code-signed yet, so Windows SmartScreen may show an "unknown publisher" warning — choose *More info → Run anyway*.
 
-Then: **Tools → Environments → Add**, enter your environment's URL (just the scheme and host, e.g. `https://csi10x.erpsl.inforcloudsuite.com`), the SyteLine **configuration** name, and your credentials.
+### Setting up an environment
+
+**This is a prerequisite:** the query IDO must be installed in an environment before you can add that environment in SyteQuery or run any query against it. It is a one-time step per environment that follows the standard SyteLine administration process: compile the `SyteQuery.IDO` project, upload the resulting **DLL and PDB** in the **IDO Extension Class Assemblies** form, create a new IDO, bind the assembly to it, and add the `ExecuteQuery` IDO method. The full walkthrough is in [`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md). Then: **Tools → Environments → Add**, enter your environment's URL (just the scheme and host, e.g. `https://csi10x.erpsl.inforcloudsuite.com`), the SyteLine **configuration** name, the **IDO name** you created, and your credentials. SyteQuery tests the connection and the IDO before saving.
 
 ## Build from source
 
@@ -73,6 +77,15 @@ SyteQuery runs the SQL you type, with the permissions of the SyteLine account yo
 - Always review a query before pressing Execute (F5).
 
 Found a security problem? Please follow [SECURITY.md](SECURITY.md).
+
+## Roadmap
+
+SyteQuery is a single-user desktop app today. Under consideration, in no fixed order:
+
+- **A shared server mode** — a small service plus the desktop client, so a team can share environments, snippets and history, with per-user permissions.
+- **Scheduled jobs** — run a saved query on a schedule and deliver the results by email or webhook. This belongs in that server mode (a desktop window that has to stay open is a poor place to schedule anything), so it will come with it rather than before it.
+
+Ideas and feedback are welcome via [issues](../../issues).
 
 ## Built by ClearDay Tech Group
 

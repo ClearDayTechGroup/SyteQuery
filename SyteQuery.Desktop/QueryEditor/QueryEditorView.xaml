@@ -1,0 +1,103 @@
+<UserControl x:Class="SyteQuery.Desktop.QueryEditor.QueryEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+    <DockPanel LastChildFill="True">
+
+        <!-- Toolbar: a themed strip instead of WPF's ToolBar control (which doesn't pick up
+             the Fluent look). Environment picker left, actions right of it. -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource PanelToolbarBorder}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Environment" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Style="{StaticResource SecondaryText}" />
+                <ComboBox Width="200" Margin="0,0,16,0"
+                          ItemsSource="{Binding Environments}"
+                          SelectedValue="{Binding SelectedEnvironmentId}"
+                          SelectedValuePath="Id"
+                          DisplayMemberPath="Name" />
+
+                <Button x:Name="ExecuteButton" Click="OnExecuteClick" ToolTip="Execute (F5)"
+                        Style="{DynamicResource AccentButtonStyle}" Padding="14,5" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="▶" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0" />
+                        <TextBlock Text="Execute" />
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="FormatButton" Click="OnFormatClick" ToolTip="Format query" Padding="12,5" Margin="0,0,6,0">
+                    <TextBlock Text="Format" />
+                </Button>
+                <Button x:Name="SaveSnippetButton" Click="OnSaveSnippetClick" ToolTip="Save current query as a snippet" Padding="12,5" Margin="0,0,16,0">
+                    <TextBlock Text="Save as Snippet" />
+                </Button>
+
+                <Button x:Name="CommentButton" Click="OnCommentClick" ToolTip="Comment selection" Padding="12,5" Margin="0,0,6,0">
+                    <TextBlock Text="Comment" />
+                </Button>
+                <Button x:Name="UncommentButton" Click="OnUncommentClick" ToolTip="Uncomment selection" Padding="12,5">
+                    <TextBlock Text="Uncomment" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Failure banner: appears right above the editor whenever the last run failed or was blocked,
+             so you never have to know to open the Messages panel to find out what went wrong. -->
+        <Border DockPanel.Dock="Top" Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
+                Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}"
+                BorderBrush="{DynamicResource SystemFillColorCriticalBrush}" BorderThickness="4,0,0,1"
+                Padding="12,8,8,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Viewbox Grid.Column="0" Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,10,0">
+                    <Canvas Width="24" Height="24">
+                        <Path Data="M12,3 A9,9 0 1 0 12,21 A9,9 0 1 0 12,3 Z M12,7.5 L12,13 M12,16 L12,16.5"
+                              Stroke="{DynamicResource SystemFillColorCriticalBrush}" StrokeThickness="2"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Canvas>
+                </Viewbox>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Query failed" FontWeight="SemiBold"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+                    <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" IsHitTestVisible="True"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="✕" Click="OnDismissErrorClick" ToolTip="Dismiss" VerticalAlignment="Top"
+                        Padding="8,2" Background="Transparent" BorderThickness="0" />
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource PanelStatusBorder}">
+            <TextBlock Text="{Binding StatusText}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource SecondaryText}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Border>
+
+        <avalonEdit:TextEditor x:Name="Editor"
+                                FontFamily="Cascadia Mono, Consolas"
+                                FontSize="14"
+                                ShowLineNumbers="True"
+                                Padding="6,6,0,0"
+                                BorderThickness="0" />
+
+    </DockPanel>
+</UserControl>

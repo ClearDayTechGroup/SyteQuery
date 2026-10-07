@@ -1,0 +1,37 @@
+name: Bug report
+description: Something isn't working as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Please don't paste credentials, tenant URLs, or customer data** — blur or replace them in logs and screenshots.
+  - type: input
+    id: version
+    attributes:
+      label: SyteQuery version
+      description: Help → About SyteQuery
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. ...\n2. ...\n3. ..."
+  - type: input
+    id: syteline
+    attributes:
+      label: SyteLine version / hosting
+      description: e.g. CloudSuite Industrial multi-tenant, on-prem 10.x
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Is it theme-related?
+      options: ["No / not sure", "Only in dark mode", "Only in light mode"]

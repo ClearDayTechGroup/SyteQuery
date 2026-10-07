@@ -1,0 +1,10 @@
+<Window x:Class="SyteQuery.Desktop.ObjectExplorer.ChoiceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Choose an action" SizeToContent="WidthAndHeight" MinWidth="380"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
+    <StackPanel Margin="20">
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" MaxWidth="460" Margin="0,0,0,18" />
+        <StackPanel x:Name="OptionsPanel" Orientation="Horizontal" HorizontalAlignment="Right" />
+    </StackPanel>
+</Window>

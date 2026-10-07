@@ -1,9 +1,38 @@
-﻿<Application x:Class="SyteQuery.Desktop.App"
+<Application x:Class="SyteQuery.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:SyteQuery.Desktop"
-             StartupUri="MainWindow.xaml">
+             ThemeMode="System">
+    <!--
+        No StartupUri here - MainWindow is resolved through the DI container in
+        App.xaml.cs so it (and everything it depends on) gets its constructor
+        arguments injected instead of requiring a parameterless constructor.
+
+        ThemeMode="System" turns on .NET 9's built-in Windows 11 Fluent theme and makes
+        it follow the user's Windows light/dark setting (including the title bar). It's
+        still flagged experimental by the framework, hence WPF0001 in NoWarn.
+    -->
     <Application.Resources>
-         
+
+        <!-- Shared spacing/typography so the whole app has one rhythm. -->
+        <Style x:Key="PanelToolbarBorder" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="8,6" />
+        </Style>
+
+        <Style x:Key="PanelStatusBorder" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="Padding" Value="10,4" />
+        </Style>
+
+        <Style x:Key="SecondaryText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
     </Application.Resources>
 </Application>
