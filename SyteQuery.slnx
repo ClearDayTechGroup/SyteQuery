@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="SyteQuery.Core/SyteQuery.Core.csproj" />
   <Project Path="SyteQuery.Desktop/SyteQuery.Desktop.csproj" />
-  <Project Path="SyteQuery.IDO/SyteQuery.IDO.csproj" />
+  <Project Path="SyteQuery.IDO/SyteQuery.IDO.csproj" Id="820eae2f-bb21-4b2a-9ed2-8f91071bedc5" />
 </Solution>

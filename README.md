@@ -78,14 +78,23 @@ SyteQuery runs the SQL you type, with the permissions of the SyteLine account yo
 
 Found a security problem? Please follow [SECURITY.md](SECURITY.md).
 
+## Known limitations
+
+SyteQuery sends your SQL to SyteLine through the query IDO over REST, and that shapes what it can do today:
+
+- **One SELECT per run.** Each run sends a single command and shows a single result set, so in practice you can send only **one `SELECT` statement at a time**. Multi-statement scripts and batches aren't supported yet.
+- **No open transactions across runs.** You can't `BEGIN TRAN`, leave it open while you run sanity-check queries, and then `COMMIT` or `ROLLBACK` in a later run. SyteQuery has no access to the SQL Server session (SPID) its command runs in, so it can't keep a session — and therefore a transaction — alive between runs. Every run starts from a clean session.
+
+Both are things we'd like to improve; see the [feature request for multi-statement scripts and transactions](../../issues?q=is%3Aissue+label%3Aenhancement) and add your use case there.
+
 ## Roadmap
 
 SyteQuery is a single-user desktop app today. Under consideration, in no fixed order:
 
-- **A shared server mode** — a small service plus the desktop client, so a team can share environments, snippets and history, with per-user permissions.
+- **Multi-statement scripts and transactions** — run more than one statement per execution, and a way to run a sequence (for example begin, check, commit) in a single session. Needs changes on both the app and the IDO side, since the IDO is what holds the database connection.- **A shared server mode** — a small service plus the desktop client, so a team can share environments, snippets and history, with per-user permissions.
 - **Scheduled jobs** — run a saved query on a schedule and deliver the results by email or webhook. This belongs in that server mode (a desktop window that has to stay open is a poor place to schedule anything), so it will come with it rather than before it.
 
-Ideas and feedback are welcome via [issues](../../issues).
+**Want something that isn't here?** [Open a feature request](../../issues/new/choose) — check the [existing requests](../../issues?q=is%3Aissue+label%3Aenhancement) first and add your use case to a matching one if there is one.
 
 ## Built by ClearDay Tech Group
 

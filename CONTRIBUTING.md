@@ -8,6 +8,10 @@ Thanks for your interest! Bug reports, ideas and pull requests are all welcome.
 - **New features or anything sizeable**: please open an issue first so we can agree on the approach before you spend time on it.
 - **Security problems**: don't open a public issue — see [SECURITY.md](SECURITY.md).
 
+## Suggesting a feature
+
+Use the **Feature request** form when you [open an issue](../../issues/new/choose). Search existing requests first and add your use case to a matching one instead of opening a duplicate. One idea per issue, and describe the problem you're trying to solve before the solution you have in mind. Known gaps (one `SELECT` per run, no transactions held open across runs) are listed under *Known limitations* in the [README](README.md).
+
 ## Building
 
 You need Windows and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
