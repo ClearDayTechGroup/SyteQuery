@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>SyteQuery</RootNamespace>
+	</PropertyGroup>
+
+	<!--
+    These files used to live in a Microsoft.NET.Sdk.Web project, which auto-adds these
+    as implicit global usings (a plain Microsoft.NET.Sdk class library doesn't). Declaring
+    them here avoids editing every individual file that relied on that.
+  -->
+	<ItemGroup>
+		<Using Include="Microsoft.Extensions.Configuration" />
+		<Using Include="Microsoft.Extensions.DependencyInjection" />
+		<Using Include="Microsoft.Extensions.Hosting" />
+		<Using Include="Microsoft.Extensions.Logging" />
+	</ItemGroup>
+
+	<!--
+    Pure backend: IDO/SyteLine connectivity, local storage, scheduling, export, SQL
+    formatting. No UI framework references - referenced by SyteQuery.Desktop (WPF).
+    See OPEN_SOURCE_NATIVE_PLAN.md Phase 4.
+  -->
+
+	<ItemGroup>
+		<PackageReference Include="ClosedXML" Version="0.105.0" />
+		<PackageReference Include="Cronos" Version="0.11.1" />
+		<PackageReference Include="MailKit" Version="4.18.1" />
+		<!-- Full package (not just .Abstractions) for the AddDataProtection() extension method
+         itself. This is fine to use outside ASP.NET Core, despite the package name -
+         Microsoft documents this exact scenario ("Data Protection in non-ASP.NET Core apps"). -->
+		<PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+		<PackageReference Include="Microsoft.SqlServer.TransactSql.ScriptDom" Version="170.147.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.20" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,75 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<!-- WPF0001: .NET 9's Fluent theme / ThemeMode is flagged experimental by the framework. -->
+		<NoWarn>$(NoWarn);WPF0001</NoWarn>
+		<RootNamespace>SyteQuery.Desktop</RootNamespace>
+		<AssemblyName>SyteQuery</AssemblyName>
+		<StartupObject>SyteQuery.Desktop.Program</StartupObject>
+		<ApplicationIcon>Assets\SyteQuery.ico</ApplicationIcon>
+		<!-- Version/identity shown in file properties and used by Velopack as the package version. -->
+		<Version>0.1.0</Version>
+		<!-- Keep the product version clean ("0.1.0", not "0.1.0+<git hash>") in file properties. -->
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+		<Product>SyteQuery</Product>
+		<Company>ClearDay Tech Group</Company>
+		<Authors>ClearDay Tech Group</Authors>
+		<Description>A native Windows query tool for Infor SyteLine</Description>
+		<Copyright>Copyright (c) ClearDay Tech Group</Copyright>
+		<!-- Libraries ship localized resource folders we don't use; skip them to keep the package smaller. -->
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SyteQuery.Core\SyteQuery.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Native WPF text editor with syntax highlighting/completion-popup support (Phase 4c
+         query editor) - mature, actively-maintained, MIT licensed. -->
+		<PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.0" />
+		<!-- Generic Host: DI container + configuration + logging, same pattern as the
+         backend services already expect (ILogger<T>, IOptions<T>, etc.) -->
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<!-- VS-style dockable panels (Object Explorer / Editor / Results / Messages) -
+         actively-maintained community fork, MIT licensed. -->
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.72.0" />
+		<PackageReference Include="Velopack" Version="1.2.161" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Ship the license and third-party notices beside the exe (MIT and Ms-PL both ask for the notice
+         to travel with the software). -->
+		<None Include="..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Window/taskbar icon (MainWindow.xaml references it by pack URI). -->
+		<Resource Include="Assets\SyteQuery.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- T-SQL syntax definition for the AvalonEdit query editor (Phase 4c) - embedded so
+         it loads via Assembly.GetManifestResourceStream instead of shipping as a loose file. -->
+		<EmbeddedResource Include="QueryEditor\SqlHighlighting.xshd" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Assets\" />
+	  <Folder Include="QueryEditor\" />
+	</ItemGroup>
+
+</Project>

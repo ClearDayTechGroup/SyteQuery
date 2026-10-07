@@ -1,1 +1,4 @@
-<Solution />
+<Solution>
+  <Project Path="SyteQuery.Core/SyteQuery.Core.csproj" />
+  <Project Path="SyteQuery.Desktop/SyteQuery.Desktop.csproj" />
+</Solution>

@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!--
+  Minimal T-SQL highlighting definition for AvalonEdit. Not exhaustive - covers the
+  keyword set QueryTool's IntelliSense already knows about (see IntelliSenseProvider's
+  SqlKeywords), plus comments/strings/numbers, which is enough to read a query at a
+  glance. Extend as gaps are noticed rather than trying to enumerate all of T-SQL up front.
+-->
+<SyntaxDefinition name="SQL" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <Color name="Comment" foreground="#57A64A" />
+  <Color name="String" foreground="#D69D85" />
+  <Color name="Keyword" foreground="#569CD6" fontWeight="bold" />
+  <Color name="FunctionKeyword" foreground="#DCDCAA" />
+  <Color name="Number" foreground="#B5CEA8" />
+  <Color name="Variable" foreground="#9CDCFE" />
+  <Color name="BracketedIdentifier" foreground="#D7BA7D" />
+
+  <RuleSet>
+    <Span color="Comment" begin="--" />
+    <Span color="Comment" multiline="true" begin="/\*" end="\*/" />
+    <Span color="String">
+      <Begin>'</Begin>
+      <End>'</End>
+      <RuleSet>
+        <!-- doubled single-quote is an escaped quote inside a T-SQL string literal -->
+        <Span begin="''" end="" />
+      </RuleSet>
+    </Span>
+    <Span color="BracketedIdentifier" begin="\[" end="\]" />
+
+    <Rule color="Number">
+      \b0[xX][0-9a-fA-F]+\b
+      | \b\d+(\.\d+)?\b
+    </Rule>
+
+    <Rule color="Variable">
+      @[\w]+
+    </Rule>
+
+    <Keywords color="Keyword">
+      <Word>SELECT</Word>
+      <Word>FROM</Word>
+      <Word>WHERE</Word>
+      <Word>JOIN</Word>
+      <Word>INNER</Word>
+      <Word>LEFT</Word>
+      <Word>RIGHT</Word>
+      <Word>FULL</Word>
+      <Word>OUTER</Word>
+      <Word>ON</Word>
+      <Word>GROUP</Word>
+      <Word>BY</Word>
+      <Word>HAVING</Word>
+      <Word>ORDER</Word>
+      <Word>INSERT</Word>
+      <Word>INTO</Word>
+      <Word>UPDATE</Word>
+      <Word>SET</Word>
+      <Word>DELETE</Word>
+      <Word>CREATE</Word>
+      <Word>ALTER</Word>
+      <Word>DROP</Word>
+      <Word>TABLE</Word>
+      <Word>AS</Word>
+      <Word>DISTINCT</Word>
+      <Word>TOP</Word>
+      <Word>CASE</Word>
+      <Word>WHEN</Word>
+      <Word>THEN</Word>
+      <Word>ELSE</Word>
+      <Word>END</Word>
+      <Word>AND</Word>
+      <Word>OR</Word>
+      <Word>NOT</Word>
+      <Word>NULL</Word>
+      <Word>IS</Word>
+      <Word>IN</Word>
+      <Word>EXISTS</Word>
+      <Word>BETWEEN</Word>
+      <Word>LIKE</Word>
+      <Word>UNION</Word>
+      <Word>ALL</Word>
+      <Word>DECLARE</Word>
+      <Word>EXEC</Word>
+      <Word>EXECUTE</Word>
+      <Word>PROCEDURE</Word>
+      <Word>FUNCTION</Word>
+      <Word>VIEW</Word>
+      <Word>TRIGGER</Word>
+      <Word>RETURNS</Word>
+      <Word>BEGIN</Word>
+      <Word>ASC</Word>
+      <Word>DESC</Word>
+      <Word>WITH</Word>
+      <Word>NOLOCK</Word>
+      <Word>DEFAULT</Word>
+      <Word>PRIMARY</Word>
+      <Word>KEY</Word>
+      <Word>FOREIGN</Word>
+      <Word>REFERENCES</Word>
+      <Word>CAST</Word>
+      <Word>CONVERT</Word>
+      <Word>OVER</Word>
+      <Word>PARTITION</Word>
+    </Keywords>
+
+    <Keywords color="FunctionKeyword">
+      <Word>COUNT</Word>
+      <Word>SUM</Word>
+      <Word>AVG</Word>
+      <Word>MIN</Word>
+      <Word>MAX</Word>
+      <Word>ISNULL</Word>
+      <Word>COALESCE</Word>
+      <Word>GETDATE</Word>
+      <Word>LEN</Word>
+      <Word>SUBSTRING</Word>
+      <Word>REPLACE</Word>
+      <Word>TRIM</Word>
+      <Word>UPPER</Word>
+      <Word>LOWER</Word>
+    </Keywords>
+  </RuleSet>
+</SyntaxDefinition>
