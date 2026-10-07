@@ -30,7 +30,7 @@ On first run the app creates its SQLite database at `%LOCALAPPDATA%\SyteQuery\ap
 |---|---|
 | `SyteQuery.Core` | UI-free class library: the IDO REST client, environment/session handling, metadata cache and preloader, query analysis and validation, history, snippets, export, EF Core + SQLite storage and migrations. Organised by feature under `Features/`. |
 | `SyteQuery.Desktop` | The WPF application: windows, view models and views (`ObjectExplorer`, `QueryEditor`, `Results`, `Snippets`, `History`, `Environments`, `Compare`), theming, and the Velopack entry point. |
-| `SyteQuery.IDO` | The SyteLine-side query IDO (a .NET Framework 4.7.2 class) with its build and install guide. It is built separately from the app and needs Infor's `IDOCore.dll`/`MGShared.dll`, which can't be committed — see `SyteQuery.IDO/README.md`. |
+| `SyteQuery.IDO` | The SyteLine-side query IDO (a .NET Framework 4.7.2 class) with its build and install guide. It is built separately from the app (the GitHub build skips it) and needs Infor's SyteLine SDK assemblies, which can't be committed — see `SyteQuery.IDO/README.md`. |
 | `build` | `Build-Installer.ps1` (installer), `Generate-ThirdPartyNotices.ps1`, `Scan-ForSecrets.ps1`. |
 
 Rough rule: anything that doesn't need WPF belongs in `SyteQuery.Core`.

@@ -12,6 +12,8 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <!-- Keep the folder you build in (and your Windows user name) out of the DLL and PDB -->
+    <PathMap>$(MSBuildProjectDirectory)=/src/SyteQuery.IDO</PathMap>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,23 +34,29 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="IDOBase">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\IDOBase.dll</HintPath>
+      <HintPath>$(InforBinPath)\IDOBase.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="IDOCore">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\IDOCore.dll</HintPath>
+      <HintPath>$(InforBinPath)\IDOCore.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="IDOProtocol">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\IDOProtocol.dll</HintPath>
+      <HintPath>$(InforBinPath)\IDOProtocol.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MGCoreExt">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\MGCoreExt.dll</HintPath>
+      <HintPath>$(InforBinPath)\MGCoreExt.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MGShared">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\MGShared.dll</HintPath>
+      <HintPath>$(InforBinPath)\MGShared.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.1.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\Newtonsoft.Json.dll</HintPath>
+      <HintPath>$(InforBinPath)\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -59,7 +67,8 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="WSEnums">
-      <HintPath>..\..\Syteline\SDK\Mongoose.submod\Setup\WinStudio\WSEnums.dll</HintPath>
+      <HintPath>$(InforBinPath)\WSEnums.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -67,4 +76,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="RequireInforBinPath" BeforeTargets="ResolveAssemblyReferences" Condition="'$(InforBinPath)' == ''">
+    <Error Text="InforBinPath is not set. Point it at the folder holding Infor's IDOCore.dll, MGShared.dll and the other SyteLine SDK assemblies, e.g. msbuild /p:InforBinPath=C:\path\to\sdk. See SyteQuery.IDO\README.md." />
+  </Target>
 </Project>

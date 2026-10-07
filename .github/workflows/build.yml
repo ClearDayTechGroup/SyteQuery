@@ -15,11 +15,13 @@ jobs:
         with:
           global-json-file: global.json
 
+      # Build the app projects only. SyteQuery.IDO compiles against Infor's SyteLine assemblies,
+      # which can't be redistributed and so aren't available on the runner (see SyteQuery.IDO/README.md).
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore SyteQuery.Desktop/SyteQuery.Desktop.csproj
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build SyteQuery.Desktop/SyteQuery.Desktop.csproj --configuration Release --no-restore
 
       - name: Check for vulnerable packages
         shell: pwsh

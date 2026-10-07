@@ -66,32 +66,26 @@ The IDO runs **arbitrary SQL with the permissions of SyteLine's database login**
 You need:
 
 - **Visual Studio 2022** (or the Build Tools) with the **.NET Framework 4.7.2 targeting pack**.
-- From a SyteLine installation of the **same version** you will deploy to: Infor's **`IDOCore.dll`** and **`MGShared.dll`**, plus the **`Newtonsoft.Json.dll`** that SyteLine itself loads. The Infor files **cannot be committed to this repository or redistributed**, so the project must reference copies on your own machine instead — and the assemblies are not copied to the output (SyteLine already has them).
+- From a SyteLine installation (or the Mongoose SDK) of the **same version** you will deploy to, these seven assemblies: **`IDOBase.dll`**, **`IDOCore.dll`**, **`IDOProtocol.dll`**, **`MGCoreExt.dll`**, **`MGShared.dll`**, **`WSEnums.dll`** and the **`Newtonsoft.Json.dll`** that SyteLine itself loads. Infor's files **cannot be committed to this repository or redistributed**, so the project references copies on your own machine, and they are not copied to the output (SyteLine already has them). For the same reason **the SyteQuery GitHub build does not compile this project** — it builds the app only.
 
-Point the project at those copies with a property, so nothing machine-specific is committed. In `SyteQuery.IDO.csproj`:
+The project finds those copies through one property, **`InforBinPath`**, so nothing machine-specific is committed. Each of the seven references in `SyteQuery.IDO.csproj` looks like this:
 
 ```xml
-<ItemGroup>
-  <Reference Include="IDOCore">
-    <HintPath>$(InforBinPath)\IDOCore.dll</HintPath>
-    <Private>False</Private>
-  </Reference>
-  <Reference Include="MGShared">
-    <HintPath>$(InforBinPath)\MGShared.dll</HintPath>
-    <Private>False</Private>
-  </Reference>
-  <Reference Include="Newtonsoft.Json">
-    <HintPath>$(InforBinPath)\Newtonsoft.Json.dll</HintPath>
-    <Private>False</Private>
-  </Reference>
-</ItemGroup>
+<Reference Include="IDOCore">
+  <HintPath>$(InforBinPath)\IDOCore.dll</HintPath>
+  <Private>False</Private>
+</Reference>
 ```
 
-Then build the **Release** configuration, passing the folder that holds those files:
+If `InforBinPath` isn't set, the build stops with a message saying so.
+
+Build the **Release** configuration, passing the folder that holds those files:
 
 ```
-msbuild SyteQuery.IDO\SyteQuery.IDO.csproj /p:Configuration=Release /p:InforBinPath="C:\path\to\your\syteline\bin"
+msbuild SyteQuery.IDO\SyteQuery.IDO.csproj /p:Configuration=Release /p:InforBinPath="C:\path\to\the\folder\with\IDOCore.dll"
 ```
+
+To build from Visual Studio instead, set `InforBinPath` once as a Windows environment variable (MSBuild reads environment variables as properties) and restart Visual Studio.
 
 You get two files in `SyteQuery.IDO\bin\Release\`:
 
@@ -100,7 +94,7 @@ SyteQuery.IDO.dll
 SyteQuery.IDO.pdb
 ```
 
-**SyteLine requires both** when you save an assembly, so keep both. To stop them recording your local folder names and Windows user name, build deterministically with mapped source paths — in the project file:
+**SyteLine requires both** when you save an assembly, so keep both. The project is already set to build deterministically with mapped source paths, so the DLL and PDB don't record your local folder names or Windows user name:
 
 ```xml
 <PropertyGroup>
@@ -109,7 +103,7 @@ SyteQuery.IDO.pdb
 </PropertyGroup>
 ```
 
-Before publishing or sharing a build, check it: open the DLL and PDB in a text editor (or run `strings` over them) and make sure no path on your machine, and nothing containing your Windows user name, appears anywhere.
+This only maps paths **inside the project folder**, so build in place (don't redirect `OutDir` or `BaseIntermediateOutputPath` elsewhere). Before sharing a build, check it: search the DLL and PDB (for example with `strings`) and make sure no drive path, folder name or Windows user name appears. A clean build records only paths starting `/src/SyteQuery.IDO/`.
 
 ---
 
