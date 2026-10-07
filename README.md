@@ -49,7 +49,7 @@ Metadata (the object lists, columns, triggers) is read from SQL Server's catalog
 
 > **Prerequisite — set up the query IDO first.** SyteQuery can't connect to an environment until its query IDO has been compiled and installed in SyteLine (see [Setting up an environment](#setting-up-an-environment) below). Installing the app alone isn't enough: adding an environment fails its connection check until the IDO exists.
 
-Download the latest `ClearDay.SyteQuery-win-Setup.exe` from [Releases](../../releases) and run it. It installs per user (no administrator rights needed) and the .NET runtime is included. The installer isn't code-signed yet, so Windows SmartScreen may show an "unknown publisher" warning — choose *More info → Run anyway*.
+There is no pre-built installer yet — SyteQuery is pre-release. For now, [build it from source](#build-from-source) and run it, or build the installer yourself with `./build/Build-Installer.ps1`, which produces `ClearDay.SyteQuery-win-Setup.exe` under `artifacts/releases/`. The installer installs per user (no administrator rights needed) and includes the .NET runtime. It isn't code-signed, so Windows SmartScreen may show an "unknown publisher" warning — choose *More info → Run anyway*.
 
 ### Setting up an environment
 
@@ -60,7 +60,7 @@ Download the latest `ClearDay.SyteQuery-win-Setup.exe` from [Releases](../../rel
 Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) on Windows.
 
 ```powershell
-git clone https://github.com/<owner>/SyteQuery.git
+git clone https://github.com/ClearDayTechGroup/SyteQuery.git
 cd SyteQuery
 dotnet build
 dotnet run --project SyteQuery.Desktop
