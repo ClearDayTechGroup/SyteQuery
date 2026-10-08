@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Threading;
 using SyteQuery.Features.Environments.Services;
 using SyteQuery.Features.Metadata.Models;
 using SyteQuery.Features.Metadata.Services;
@@ -25,6 +28,9 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
     private readonly IMetadataCache _metadataCache;
     private readonly INotificationService _notifications;
 
+    private static readonly TimeSpan FilterDelay = TimeSpan.FromMilliseconds(250);
+
+    private readonly DispatcherTimer _filterTimer;
     private string _searchText = "";
     private bool _useStartsWith;
     private string? _statusMessage;
@@ -47,6 +53,12 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
         _metadataCache = metadataCache;
         _notifications = notifications;
 
+        _filterTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher)
+        {
+            Interval = FilterDelay
+        };
+        _filterTimer.Tick += (_, _) => RunFilterNow();
+
         _envMgr.ProfilesChanged += OnProfilesChanged;
         BuildEnvironmentRoots();
     }
@@ -57,7 +69,7 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _searchText, value))
-                FilterNodes();
+                ScheduleFilter();
         }
     }
 
@@ -67,7 +79,7 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
         set
         {
             if (SetField(ref _useStartsWith, value))
-                FilterNodes();
+                RunFilterNow();
         }
     }
 
@@ -563,41 +575,72 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
     // same limitation the Blazor version had)
     // ------------------------------------------------------------
 
-    public void ClearSearch() => SearchText = "";
+    public void ClearSearch()
+    {
+        SearchText = "";
+        RunFilterNow();
+    }
+
+    // Filtering runs once typing pauses, not on every keystroke.
+    private void ScheduleFilter()
+    {
+        _filterTimer.Stop();
+        _filterTimer.Start();
+    }
+
+    private void RunFilterNow()
+    {
+        _filterTimer.Stop();
+        FilterNodes();
+    }
 
     private void FilterNodes()
     {
         if (string.IsNullOrWhiteSpace(_searchText))
             ShowAllNodes(Roots);
         else
-            FilterNodesRecursive(Roots, _searchText.ToLowerInvariant());
+            FilterNodesRecursive(Roots, _searchText);
     }
 
-    private static void ShowAllNodes(IEnumerable<TreeNode> nodes)
+    private static void ShowAllNodes(ObservableCollection<TreeNode> nodes)
     {
+        var changed = false;
         foreach (var node in nodes)
         {
-            node.IsVisible = true;
+            if (!node.IsVisible)
+            {
+                node.IsVisible = true;
+                changed = true;
+            }
             if (node.Children.Count > 0)
                 ShowAllNodes(node.Children);
         }
+
+        if (changed)
+            RefreshView(nodes);
     }
 
-    private bool FilterNodesRecursive(IEnumerable<TreeNode> nodes, string searchLower)
+    private bool FilterNodesRecursive(ObservableCollection<TreeNode> nodes, string search)
     {
         bool anyVisible = false;
+        bool changed = false;
 
         foreach (var node in nodes)
         {
             var nodeMatches = _useStartsWith
-                ? node.Text.StartsWith(searchLower, StringComparison.OrdinalIgnoreCase)
-                : node.Text.Contains(searchLower, StringComparison.OrdinalIgnoreCase);
+                ? node.Text.StartsWith(search, StringComparison.OrdinalIgnoreCase)
+                : node.Text.Contains(search, StringComparison.OrdinalIgnoreCase);
 
-            var childrenVisible = node.Children.Count > 0 && FilterNodesRecursive(node.Children, searchLower);
+            var childrenVisible = node.Children.Count > 0 && FilterNodesRecursive(node.Children, search);
 
-            node.IsVisible = nodeMatches || childrenVisible;
+            var visible = nodeMatches || childrenVisible;
+            if (node.IsVisible != visible)
+            {
+                node.IsVisible = visible;
+                changed = true;
+            }
 
-            if (node.IsVisible)
+            if (visible)
             {
                 anyVisible = true;
                 if (childrenVisible && !node.IsExpanded)
@@ -605,7 +648,25 @@ public sealed class ObjectExplorerViewModel : INotifyPropertyChanged
             }
         }
 
+        if (changed)
+            RefreshView(nodes);
+
         return anyVisible;
+    }
+
+    /// <summary>
+    /// Hides non-matching nodes by filtering the collection's view, not by collapsing their
+    /// containers. A collapsed item has zero height, so a virtualizing panel realizes a container
+    /// for every one of them to fill the viewport - with thousands of objects in a schema that was
+    /// the freeze on every keystroke. Items a view filters out don't exist for the panel at all.
+    /// </summary>
+    private static void RefreshView(ObservableCollection<TreeNode> nodes)
+    {
+        var view = CollectionViewSource.GetDefaultView(nodes);
+        if (view.Filter is null)
+            view.Filter = static o => ((TreeNode)o).IsVisible;   // setting a filter refreshes the view
+        else
+            view.Refresh();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

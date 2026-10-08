@@ -85,7 +85,18 @@ Build the **Release** configuration, passing the folder that holds those files:
 msbuild SyteQuery.IDO\SyteQuery.IDO.csproj /p:Configuration=Release /p:InforBinPath="C:\path\to\the\folder\with\IDOCore.dll"
 ```
 
-To build from Visual Studio instead, set `InforBinPath` once as a Windows environment variable (MSBuild reads environment variables as properties) and restart Visual Studio.
+**To build from Visual Studio, create a per-user file** next to the project, `SyteQuery.IDO\SyteQuery.IDO.csproj.user`, containing your path:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <InforBinPath>C:\path\to\the\folder\with\IDOCore.dll</InforBinPath>
+  </PropertyGroup>
+</Project>
+```
+
+MSBuild and Visual Studio load it automatically (reload the project if it was already open), and `*.user` files are git-ignored, so your path is never committed. Alternatively, set `InforBinPath` once as a Windows environment variable and restart Visual Studio.
 
 You get two files in `SyteQuery.IDO\bin\Release\`:
 

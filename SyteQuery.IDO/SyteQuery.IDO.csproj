@@ -77,6 +77,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="RequireInforBinPath" BeforeTargets="ResolveAssemblyReferences" Condition="'$(InforBinPath)' == ''">
-    <Error Text="InforBinPath is not set. Point it at the folder holding Infor's IDOCore.dll, MGShared.dll and the other SyteLine SDK assemblies, e.g. msbuild /p:InforBinPath=C:\path\to\sdk. See SyteQuery.IDO\README.md." />
+    <Error Text="InforBinPath is not set. Point it at the folder holding Infor's IDOCore.dll, MGShared.dll and the other SyteLine SDK assemblies. Create SyteQuery.IDO.csproj.user next to this project containing it, or pass /p:InforBinPath=C:\path\to\sdk to msbuild. See SyteQuery.IDO\README.md." />
   </Target>
 </Project>

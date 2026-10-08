@@ -187,7 +187,10 @@
                  binding and search's auto-expand would stop working on that node. No feedback
                  loop: EnsureChildrenLoadedAsync never writes IsExpanded back. -->
             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVis}}" />
+            <!-- Search hides non-matching nodes by filtering each Children collection's view
+                 (see ObjectExplorerViewModel.RefreshView), not by collapsing containers here:
+                 collapsed items still get a container each in a virtualizing panel, which froze
+                 the tree on every keystroke. -->
             <!-- WPF's TreeView doesn't virtualize by default, and an explicit item style
                  replaces the theme's (so the nested panel falls back to a plain StackPanel
                  too). Without this, expanding a schema folder with thousands of objects
