@@ -2,7 +2,10 @@
 
 **A native Windows query tool for Infor SyteLine** — an SSMS-style workspace for exploring and querying your SyteLine database, built on SyteLine's own REST API.
 
-<!-- Add a screenshot or short demo GIF here: docs/images/hero.png -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
+  <img alt="SyteQuery: Object Explorer on the left, a T-SQL query with its results below it, and a snippets panel on the right" src="docs/images/hero.png">
+</picture>
 
 Browse every table, view, stored procedure and function across your environments, write T-SQL with IntelliSense, run it, and export the results — without leaving a single window, and without the round trips through reports, forms and one-off scripts that ad-hoc SyteLine data work usually involves.
 
@@ -29,7 +32,22 @@ Browse every table, view, stored procedure and function across your environments
 - Windows 11 look with **light / dark / follow-Windows** themes, an installer, and in-app update checks.
 - Everything is stored locally in a SQLite database under `%LOCALAPPDATA%\SyteQuery`. No account, no sign-in, no cloud service, no telemetry.
 
-<!-- Screenshots: docs/images/object-explorer.png, query-editor.png, compare.png -->
+### Screenshots
+
+**IntelliSense as you type** — tables, views, procedures, functions, snippets and columns, matched against the environment you're querying.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/query-editor-dark.png">
+  <img alt="The query editor with the IntelliSense completion list open" src="docs/images/query-editor.png" width="640">
+</picture>
+
+**Object Explorer** with search — folders open instantly because the object lists are loaded in the background.
+
+<img alt="Object Explorer searching for 'customer', showing matching tables grouped by schema" src="docs/images/object-explorer.png" width="300">
+
+**Failures are impossible to miss** — a red banner with the SQL Server error appears right above the editor.
+
+<img alt="A failed query with a red banner reading 'Invalid object name'" src="docs/images/error-banner.png" width="640">
 
 ## How it works
 
@@ -54,6 +72,8 @@ There is no pre-built installer yet — SyteQuery is pre-release. For now, [buil
 ### Setting up an environment
 
 **This is a prerequisite:** the query IDO must be installed in an environment before you can add that environment in SyteQuery or run any query against it. It is a one-time step per environment that follows the standard SyteLine administration process: compile the `SyteQuery.IDO` project, upload the resulting **DLL and PDB** in the **IDO Extension Class Assemblies** form, create a new IDO, bind the assembly to it, and add the `ExecuteQuery` IDO method. The full walkthrough is in [`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md). Then: **Tools → Environments → Add**, enter your environment's URL (just the scheme and host, e.g. `https://csi10x.erpsl.inforcloudsuite.com`), the SyteLine **configuration** name, the **IDO name** you created, and your credentials. SyteQuery tests the connection and the IDO before saving.
+
+<img alt="The Add Environment dialog with Name, URL, Config, IDO name, Username and Password fields" src="docs/images/add-environment.png" width="360">
 
 ## Build from source
 
