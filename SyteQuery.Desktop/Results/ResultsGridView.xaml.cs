@@ -54,17 +54,17 @@ public partial class ResultsGridView : UserControl
     }
 
     private async void OnExportExcelClick(object sender, RoutedEventArgs e) =>
-        await ExportAsync("Excel Workbook (*.xlsx)|*.xlsx", "xlsx", vm => vm.ExportToExcel());
+        await ExportAsync("Excel Workbook (*.xlsx)|*.xlsx", "xlsx", vm => vm.CanExportExcel, vm => vm.ExportToExcel());
 
     private async void OnExportCsvClick(object sender, RoutedEventArgs e) =>
-        await ExportAsync("CSV File (*.csv)|*.csv", "csv", vm => vm.ExportToCsv());
+        await ExportAsync("CSV File (*.csv)|*.csv", "csv", vm => vm.HasData, vm => vm.ExportToCsv());
 
     private async void OnExportJsonClick(object sender, RoutedEventArgs e) =>
-        await ExportAsync("JSON File (*.json)|*.json", "json", vm => vm.ExportToJson());
+        await ExportAsync("JSON File (*.json)|*.json", "json", vm => vm.HasData, vm => vm.ExportToJson());
 
-    private async Task ExportAsync(string filter, string extension, Func<ResultsGridViewModel, byte[]> generate)
+    private async Task ExportAsync(string filter, string extension, Func<ResultsGridViewModel, bool> canExport, Func<ResultsGridViewModel, byte[]> generate)
     {
-        if (ViewModel is not { HasData: true } vm)
+        if (ViewModel is not { } vm || !canExport(vm))
             return;
 
         var dialog = new SaveFileDialog

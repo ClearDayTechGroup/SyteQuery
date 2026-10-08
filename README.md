@@ -19,12 +19,14 @@ Browse every table, view, stored procedure and function across your environments
 
 **Query**
 - **Multi-tab editor** (AvalonEdit) with T-SQL syntax highlighting, **IntelliSense as you type** (keywords, tables, views, procedures, functions, snippets, and columns after `table.`), format-query, and comment/uncomment.
-- Query **analysis before it runs**: warns about missing `WHERE`, `SELECT *`, possible Cartesian products and more, and applies a `TOP 1000` limit when you haven't set one.
+- **Scripts with several statements**: run more than one `SELECT` (or a mix of statements) in one go, and use `GO` to split a script into batches.
+- Query **analysis before it runs**, statement by statement: warns about missing `WHERE` (including `UPDATE` and `DELETE`), `SELECT *`, possible Cartesian products and more, and applies a `TOP 1000` limit to each `SELECT` where you haven't set one.
 - **Failures are impossible to miss**: a red banner appears right above the editor with the SQL Server error.
 - **Query history** (bounded, searchable) and **snippets** (save, organise, reload).
 
 **Results**
 - A native, **virtualized grid** that stays smooth on large result sets, with quick search across all columns and export to **Excel, CSV and JSON**.
+- **Several result sets at once**: a command that returns more than one shows them as tabs above the grid. If a later statement fails, the earlier results stay visible under the error. Excel export writes every result set to its own sheet.
 
 **Built for daily use**
 - **Multiple environments**, each with its own credentials, switchable per query tab.
@@ -82,9 +84,11 @@ Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) on W
 ```powershell
 git clone https://github.com/ClearDayTechGroup/SyteQuery.git
 cd SyteQuery
-dotnet build
+dotnet build SyteQuery.Desktop
 dotnet run --project SyteQuery.Desktop
 ```
+
+Build `SyteQuery.Desktop`, not the whole solution: the solution also contains the SyteLine-side IDO project, which needs Infor's assemblies (see [`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md)). Run the tests with `dotnet test SyteQuery.Tests`.
 
 To build the installer: `./build/Build-Installer.ps1 -Version 0.1.0`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout and workflow.
 
@@ -102,16 +106,18 @@ Found a security problem? Please follow [SECURITY.md](SECURITY.md).
 
 SyteQuery sends your SQL to SyteLine through the query IDO over REST, and that shapes what it can do today:
 
-- **One SELECT per run.** Each run sends a single command and shows a single result set, so in practice you can send only **one `SELECT` statement at a time**. Multi-statement scripts and batches aren't supported yet.
-- **No open transactions across runs.** You can't `BEGIN TRAN`, leave it open while you run sanity-check queries, and then `COMMIT` or `ROLLBACK` in a later run. SyteQuery has no access to the SQL Server session (SPID) its command runs in, so it can't keep a session — and therefore a transaction — alive between runs. Every run starts from a clean session.
+- **Several result sets need the updated IDO.** The first version of the query IDO returned only the first result set of a command, although every statement still ran. SyteQuery works with that older IDO, and tells you when it is hiding results; install the current IDO ([`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md)) to see them all. Update SyteQuery and the IDO together.
+- **`GO` batches run separately.** Each batch is its own call to SyteLine, so temp tables and variables don't carry over from one batch to the next, unlike in SSMS. A script without `GO` is a single batch, and runs on one database connection.
+- **No open transactions across runs.** You can't `BEGIN TRAN`, leave it open while you run sanity-check queries, and then `COMMIT` or `ROLLBACK` in a later run. SyteQuery has no access to the SQL Server session (SPID) its command runs in, so it can't keep a session — and therefore a transaction — alive between runs. Every run starts from a clean session. What you can do is put the whole sequence in one command, such as `BEGIN TRAN; UPDATE …; SELECT <your check>; ROLLBACK;`: with the current IDO you see the check's result set, then decide whether to run it again with `COMMIT`. That relies on how SyteLine handles the connection, so try it in a test environment first.
 
-Both are things we'd like to improve; see the [feature request for multi-statement scripts and transactions](../../issues?q=is%3Aissue+label%3Aenhancement) and add your use case there.
+Something else getting in your way? See [Roadmap](#roadmap) below, and add your use case to a matching [feature request](../../issues?q=is%3Aissue+label%3Aenhancement).
 
 ## Roadmap
 
 SyteQuery is a single-user desktop app today. Under consideration, in no fixed order:
 
-- **Multi-statement scripts and transactions** — run more than one statement per execution, and a way to run a sequence (for example begin, check, commit) in a single session. Needs changes on both the app and the IDO side, since the IDO is what holds the database connection.- **A shared server mode** — a small service plus the desktop client, so a team can share environments, snippets and history, with per-user permissions.
+- **Transactions held open across runs** — begin, check, then commit in a later run. Needs a way to keep one database session alive between runs, which the query IDO can't do today.
+- **A shared server mode** — a small service plus the desktop client, so a team can share environments, snippets and history, with per-user permissions.
 - **Scheduled jobs** — run a saved query on a schedule and deliver the results by email or webhook. This belongs in that server mode (a desktop window that has to stay open is a poor place to schedule anything), so it will come with it rather than before it.
 
 **Want something that isn't here?** [Open a feature request](../../issues/new/choose) — check the [existing requests](../../issues?q=is%3Aissue+label%3Aenhancement) first and add your use case to a matching one if there is one.

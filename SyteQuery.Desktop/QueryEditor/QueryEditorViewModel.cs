@@ -30,6 +30,7 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
     private readonly IQueryAnalyzer _analyzer;
     private readonly IIntelliSenseProvider _intelliSense;
     private readonly IQueryHistoryService _history;
+    private readonly IdoVersionRegistry _idoVersions;
 
     private string? _selectedEnvironmentId;
     private string _statusText = "Ready";
@@ -77,8 +78,10 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
         IQueryAnalyzer analyzer,
         IIntelliSenseProvider intelliSense,
         IQuerySnippetService snippetService,
-        IQueryHistoryService history)
+        IQueryHistoryService history,
+        IdoVersionRegistry idoVersions)
     {
+        _idoVersions = idoVersions;
         _envMgr = envMgr;
         _queryService = queryService;
         _formatter = formatter;
@@ -253,12 +256,22 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
             AddMessage(level, $"{warning.Message}: {warning.Details}");
         }
 
-        var queryToExecute = sql;
-        if (analysis.ShouldEnforceLimit && !string.IsNullOrWhiteSpace(analysis.ModifiedQuery))
-        {
-            queryToExecute = analysis.ModifiedQuery;
+        // What to run: one entry per batch (the text between GO lines) with the row limit applied to each
+        // unbounded SELECT. A script without GO is a single batch.
+        IReadOnlyList<string> batches = analysis.Batches.Count > 0 ? analysis.Batches : new[] { sql };
+        if (analysis.ShouldEnforceLimit)
             AddMessage(QueryMessageLevel.Info, "Row limit automatically applied.");
+
+        // A script that looks like it returns several result sets, run against an IDO known to return only the first.
+        var idoNoticeShown = false;
+        if (analysis.ExtraResultSets > 0 && _idoVersions.IsOutdated(_selectedEnvironmentId))
+        {
+            AddMessage(QueryMessageLevel.Warning, OutdatedIdoNotice);
+            idoNoticeShown = true;
         }
+
+        if (batches.Count > 1)
+            AddMessage(QueryMessageLevel.Info, $"Running {batches.Count} batches (separated by GO). Each batch runs separately, so temp tables and variables don't carry over between them.");
 
         IsBusy = true;
         StatusText = "Executing...";
@@ -270,13 +283,19 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
         string? errorMessage = null;
         try
         {
-            var result = await _queryService.ExecuteAsync(_selectedEnvironmentId, queryToExecute, includeDebug: true);
+            var result = await _queryService.ExecuteBatchesAsync(_selectedEnvironmentId, batches, includeDebug: true);
             sw.Stop();
+
+            // The IDO's version isn't known until it has answered once; say so now if it turned out to be the old one.
+            if (!idoNoticeShown && analysis.ExtraResultSets > 0 && result.IdoVersion == IdoVersion.SingleResultSet)
+                AddMessage(QueryMessageLevel.Warning, OutdatedIdoNotice);
 
             if (!result.Success)
             {
                 errorMessage = result.Message;
                 AddMessage(QueryMessageLevel.Error, result.Message);
+                if (result.ResultSets.Count > 0)
+                    AddMessage(QueryMessageLevel.Info, $"{DescribeResultSets(result)} came back before the error.");
                 StatusText = "Query failed";
                 ErrorMessage = result.Message;
                 PublishResult(result);
@@ -284,9 +303,11 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
             }
 
             succeeded = true;
-            rowCount = result.RowCount;
-            AddMessage(QueryMessageLevel.Info, $"{result.Message} ({result.RowCount} row(s), {sw.ElapsedMilliseconds} ms)");
-            StatusText = $"Query complete - {result.RowCount} row(s) in {sw.ElapsedMilliseconds} ms";
+            rowCount = result.TotalRowCount;
+            AddMessage(QueryMessageLevel.Info, $"{result.Message} ({result.TotalRowCount} row(s), {sw.ElapsedMilliseconds} ms)");
+            if (result.ResultSets.Count > 1)
+                AddMessage(QueryMessageLevel.Info, $"{DescribeResultSets(result)} returned - use the tabs above the results grid to switch between them.");
+            StatusText = $"Query complete - {result.TotalRowCount} row(s) in {sw.ElapsedMilliseconds} ms";
             PublishResult(result);
         }
         catch (Exception ex)
@@ -305,6 +326,14 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
             await RecordHistoryAsync(sql, succeeded, rowCount, errorMessage, sw.ElapsedMilliseconds);
         }
     }
+
+    private const string OutdatedIdoNotice =
+        "This environment's query IDO is the older version, which returns only the first result set of each batch, " +
+        "so results after the first are not shown. Ask your SyteLine administrator to install the updated IDO " +
+        "(see SyteQuery.IDO/README.md in the SyteQuery repository).";
+
+    private static string DescribeResultSets(QueryExecutionResult result)
+        => $"{result.ResultSets.Count} result set(s) ({string.Join(", ", result.ResultSets.Select(s => s.RowCount))} row(s))";
 
     /// <summary>Saves the run to query history (what the user typed, not the row-limited rewrite).
     /// Best-effort: a history failure must never get in the way of running queries.</summary>

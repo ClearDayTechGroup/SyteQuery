@@ -17,15 +17,73 @@
                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                     Placeholder="Search results..." ToolTip="Quick search across all columns" />
                 <TextBlock Text="Export" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource SecondaryText}" />
-                <Button Click="OnExportExcelClick" ToolTip="Export to Excel" IsEnabled="{Binding HasData}" Padding="12,5" Margin="0,0,6,0">
+                <Button Click="OnExportExcelClick" ToolTip="{Binding ExcelToolTip}" IsEnabled="{Binding CanExportExcel}" Padding="12,5" Margin="0,0,6,0">
                     <TextBlock Text="Excel" />
                 </Button>
-                <Button Click="OnExportCsvClick" ToolTip="Export to CSV" IsEnabled="{Binding HasData}" Padding="12,5" Margin="0,0,6,0">
+                <Button Click="OnExportCsvClick" ToolTip="{Binding CsvToolTip}" IsEnabled="{Binding HasData}" Padding="12,5" Margin="0,0,6,0">
                     <TextBlock Text="CSV" />
                 </Button>
-                <Button Click="OnExportJsonClick" ToolTip="Export to JSON" IsEnabled="{Binding HasData}" Padding="12,5">
+                <Button Click="OnExportJsonClick" ToolTip="{Binding JsonToolTip}" IsEnabled="{Binding HasData}" Padding="12,5">
                     <TextBlock Text="JSON" />
                 </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- One tab per result set, only when a command returned more than one. -->
+        <ListBox DockPanel.Dock="Top"
+                 ItemsSource="{Binding Tabs}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                 Visibility="{Binding HasMultipleSets, Converter={StaticResource ResultsBoolToVis}}"
+                 BorderThickness="0" Background="Transparent" Padding="4,0"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="Result sets">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Setter Property="Padding" Value="14,7" />
+                    <Setter Property="Margin" Value="0,0,2,0" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border x:Name="Bd" Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="Transparent" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Label}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- A later statement failed, but earlier result sets came back and are shown below. -->
+        <Border DockPanel.Dock="Top"
+                Visibility="{Binding ShowErrorBanner, Converter={StaticResource ResultsBoolToVis}}"
+                Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}" Padding="12,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Query failed: " FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+                <TextBlock Text="{Binding ErrorText}" TextWrapping="Wrap" />
             </StackPanel>
         </Border>
 
@@ -55,7 +113,7 @@
                   VirtualizingPanel.ScrollUnit="Pixel" />
 
             <!-- Shown instead of an empty grid when the last query failed. -->
-            <Border Visibility="{Binding HasError, Converter={StaticResource ResultsBoolToVis}}"
+            <Border Visibility="{Binding ShowErrorOverlay, Converter={StaticResource ResultsBoolToVis}}"
                     Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" Padding="24">
                 <StackPanel VerticalAlignment="Top" MaxWidth="900" HorizontalAlignment="Left">
                     <TextBlock Text="Query failed" FontSize="16" FontWeight="SemiBold"

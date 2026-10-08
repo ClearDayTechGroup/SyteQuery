@@ -85,6 +85,10 @@ public partial class EditEnvironmentWindow : Window
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                 }
+                else if (idoCheck.Warning is not null)
+                {
+                    MessageBox.Show(this, idoCheck.Warning, "Query IDO", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
 
             DialogResult = true;

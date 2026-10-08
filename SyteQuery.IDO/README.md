@@ -25,11 +25,33 @@ This is the standard SyteLine administration process for custom extension classe
 | **Method name** | `ExecuteQuery` — fixed; SyteQuery always calls this name. |
 | **Parameters** (in this order) | |
 | 1. `InputCommand` | **Input.** The SQL text to run. |
-| 2. `Output` | **Output.** The result rows as a JSON array of objects, e.g. `[{"ItemCode":"A100","Qty":4}]` — either plain JSON or the same JSON base64-encoded (UTF-8); the reference implementation returns base64. Empty when the command returns no rows. |
-| 3. `Infobar` | **Input / output / message.** Status text. When the SQL fails, put the SQL error message here and leave `Output` empty — SyteQuery shows it in the red error banner. |
+| 2. `Output` | **Output.** **Every** result set the command produced, as JSON (plain, or base64-encoded UTF-8 — the reference implementation returns base64). See [Output format](#output-format) below. |
+| 3. `Infobar` | **Input / output / message.** Status text. When the SQL fails, put the SQL error message here — SyteQuery shows it in the red error banner. |
 | **Return value** | `0` on success; non-zero after setting `Infobar` on failure (the reference implementation returns `16`). |
 
-When you add an environment, SyteQuery checks the IDO end to end by running `SELECT 1 AS ok` through it and expecting `[{"ok":1}]` back. If anything is off, it tells you what (see [Troubleshooting](#5-troubleshooting)).
+When you add an environment, SyteQuery checks the IDO end to end by running `SELECT 1 AS ok` through it and expecting a result with an `ok` column back. If anything is off, it tells you what (see [Troubleshooting](#5-troubleshooting)).
+
+### Output format
+
+Version 2 (the reference implementation):
+
+```json
+{"version":2,
+ "resultSets":[
+   {"columns":["item","qty"], "rows":[{"item":"A100","qty":4}]},
+   {"columns":["cust_num"],   "rows":[]}
+ ]}
+```
+
+- One entry in `resultSets` per `SELECT` the command ran, in order. Statements that return no rows set (`INSERT`, `UPDATE`, …) add none, so a command with no `SELECT` gives `"resultSets":[]`.
+- `columns` is always listed, so a result set with no rows still shows its column names. Duplicate or missing column names are made unique (`id`, `id1`; `Column3`).
+- If a later statement fails, the result sets read before it are kept, `"error":"<message>"` is added, `Infobar` holds the same message and the return value is non-zero — like SSMS showing the first grid and then the error.
+
+**Version 1** — the original IDO — returned only the **first** result set, as a bare JSON array of row objects (`[{"item":"A100","qty":4}]`). SyteQuery still reads it, so an environment whose IDO hasn't been updated keeps working. It just can't show more than the first result set, and SyteQuery tells you when that matters.
+
+> **This "version" is the output format, not SyteLine's revision number.** The number in `"version"` comes from the code in the assembly (`ResultSetJson.Version`) and changes only when that code changes. SyteLine's own IDO revision, which goes up every time someone checks the IDO in, is a different thing: SyteQuery never reads it, so checking the IDO out and in, or adding other methods to it, does not affect SyteQuery. Only the assembly you installed matters.
+
+**Keep the app and the IDO in step.** When a release changes the IDO, the release notes say so: update SyteQuery, then have your SyteLine administrator install the new IDO (re-save the assembly — DLL and PDB — and reload the IDO metadata, see [Install in SyteLine](#4-install-in-syteline)). A newer app works with an older IDO; an older app **cannot** read a newer IDO's output.
 
 The reference implementation is in [`QueryTool.cs`](QueryTool.cs): extension class `QueryTool` in namespace `QueryTool`, with the `ExecuteQuery` method above.
 
@@ -141,7 +163,9 @@ What SyteQuery says, and what to look at:
 | *SyteLine rejected the call to …ExecuteQuery* | The IDO has no method called `ExecuteQuery`, it has the wrong parameters, or the assembly isn't bound to the IDO. |
 | *ran but returned no data* | The method runs but doesn't put JSON rows in its second (`Output`) parameter. |
 | *answered with an error instead of data: …* | The method ran and reported a failure in `Infobar` — the text is the underlying error (often a SQL or permissions problem). |
-| *returned data, but not a JSON array of rows* | `Output` isn't a JSON array of objects (or its base64). |
+| *returned data SyteQuery couldn't read* / *returned data, but not the rows SyteQuery expected* | `Output` isn't in the [output format](#output-format) (or its base64), or the test query didn't come back with an `ok` column. |
+| *The IDO … works, but it is an older version* | Not an error. The IDO is the original version and returns only the first result set. Install the updated IDO to see them all. |
+| *…results in format version N, but this version of SyteQuery understands up to…* | The IDO is newer than your SyteQuery. Update SyteQuery. |
 | Authentication failed | Not an IDO problem — check URL, configuration, user and password. |
 
 Still stuck? Open an issue (without credentials, tenant URLs or customer data).

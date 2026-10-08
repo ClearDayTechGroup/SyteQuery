@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using SyteQuery.Features.Database.Entities;
 using SyteQuery.Features.Environments.Repositories;
 using SyteQuery.Features.DataExport.Services;
+using SyteQuery.Features.DatabaseQuery.Services;
 using SyteQuery.Features.QueryEditor.Models;
 using SyteQuery.Features.QueryEditor.Services;
 using SyteQuery.Features.Common.Services;
@@ -16,6 +17,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IIdoHttpClient _idoHttpClient;
+    private readonly IdoVersionRegistry _idoVersions;
     private readonly ConcurrentDictionary<string, EnvProfile> _profilesCache = new();
     private readonly ConcurrentDictionary<string, string> _tokenCache = new(); // key: url|config|user
     private string? _cachedUserId;
@@ -24,10 +26,12 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
 
     public DatabaseEnvironmentSessionManager(
         IServiceScopeFactory scopeFactory,
-        IIdoHttpClient idoHttpClient)
+        IIdoHttpClient idoHttpClient,
+        IdoVersionRegistry idoVersions)
     {
         _scopeFactory = scopeFactory;
         _idoHttpClient = idoHttpClient;
+        _idoVersions = idoVersions;
     }
 
     public IReadOnlyList<EnvProfile> Profiles
@@ -337,10 +341,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
             throw new InvalidOperationException($"Metadata query failed: {result.Message}");
 
         // Parse results
-        var json = DataEncoder.TryDecodeBase64ToUtf8(result.DataBase64) ?? result.DataBase64 ?? string.Empty;
-        var names = ExtractColumnValues(json, "Name");
-
-        return names;
+        return ExtractColumnValues(result.DataBase64, "Name");
     }
 
     private static string GetMetadataQuery(MetadataType type) => type switch
@@ -366,27 +367,17 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
-    private static List<string> ExtractColumnValues(string json, string columnName)
+    private static List<string> ExtractColumnValues(string? payload, string columnName)
     {
-        if (string.IsNullOrWhiteSpace(json))
+        // Metadata queries return a single result set: take the first.
+        if (!IdoResultParser.TryParse(payload, out var parsed, out _) || parsed!.ResultSets.Count == 0)
             return new List<string>();
 
-        try
-        {
-            var rows = JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(json);
-            if (rows is null)
-                return new List<string>();
-
-            return rows
-                .Select(r => r.TryGetValue(columnName, out var val) ? val?.ToString() : null)
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Cast<string>()
-                .ToList();
-        }
-        catch
-        {
-            return new List<string>();
-        }
+        return parsed.ResultSets[0].Rows
+            .Select(r => r.TryGetValue(columnName, out var val) ? val?.ToString() : null)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Cast<string>()
+            .ToList();
     }
 
     // ------------------------------------------------------------
@@ -459,13 +450,32 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
                             $"second (Output) parameter. {SetupGuideHint}");
                 }
 
-                var json = DataEncoder.TryDecodeBase64ToUtf8(data) ?? data;
-                if (!json.Contains("\"ok\"", StringComparison.OrdinalIgnoreCase))
+                if (!IdoResultParser.TryParse(data, out var parsed, out var problem))
                 {
+                    var json = DataEncoder.TryDecodeBase64ToUtf8(data) ?? data;
                     var preview = json.Length > 120 ? json[..120] + "..." : json;
                     return IdoValidationResult.Failure(
-                        $"The IDO '{idoName}' returned data, but not a JSON array of rows (expected something like [{{\"ok\":1}}]). " +
+                        $"The IDO '{idoName}' returned data SyteQuery couldn't read: {problem} It returned: {preview}");
+                }
+
+                var returnedOk = parsed!.ResultSets.Count > 0 &&
+                                 parsed.ResultSets[0].Rows.Any(r => r.Keys.Any(k => k.Equals("ok", StringComparison.OrdinalIgnoreCase)));
+                if (!returnedOk)
+                {
+                    var json = DataEncoder.TryDecodeBase64ToUtf8(data) ?? data;
+                    var preview = json.Length > 120 ? json[..120] + "..." : json;
+                    return IdoValidationResult.Failure(
+                        $"The IDO '{idoName}' returned data, but not the rows SyteQuery expected (a result with an \"ok\" column). " +
                         $"It returned: {preview}");
+                }
+
+                _idoVersions.Record(envId, parsed.Version);
+
+                if (parsed.Version < IdoVersion.MultipleResultSets)
+                {
+                    return IdoValidationResult.SuccessWithWarning(
+                        $"The IDO '{idoName}' works, but it is an older version: it returns only the first result set of a command. " +
+                        $"Ask your SyteLine administrator to install the updated IDO to run scripts with several SELECT statements. {SetupGuideHint}");
                 }
 
                 return IdoValidationResult.Success();

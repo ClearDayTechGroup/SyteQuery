@@ -85,6 +85,13 @@ public partial class AddEnvironmentWindow : Window
             await _metadataCache.GetAggregateFunctionsAsync(_profile.Id);
 
             StatusText.Text = "Complete!";
+
+            // Works, but worth knowing - for example the admin hasn't installed the updated IDO yet.
+            if (idoCheck.Warning is not null)
+            {
+                MessageBox.Show(this, idoCheck.Warning, "Query IDO", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
             WasAdded = true;
             DialogResult = true;
             Close();

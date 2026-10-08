@@ -1,6 +1,5 @@
-﻿using Mongoose.IDO;
+using Mongoose.IDO;
 using Mongoose.IDO.DataAccess;
-using Newtonsoft.Json;
 using System;
 using System.Data;
 using System.Text;
@@ -11,14 +10,19 @@ namespace QueryTool
     [IDOExtensionClass(nameof(QueryTool))]
     public class QueryTool : IDOExtensionClass
     {
+        /// <summary>
+        /// Runs <paramref name="InputCommand"/> and returns every result set it produces as base64-encoded JSON
+        /// (see <see cref="ResultSetJson"/>). On failure the SQL error goes in <paramref name="Infobar"/> and the
+        /// return value is 16; if a later statement failed, <paramref name="Output"/> still holds the result sets
+        /// read before it.
+        /// </summary>
         [IDOMethod(MethodFlags.None, "Infobar")]
         public int ExecuteQuery(string InputCommand, ref string Output, ref string Infobar)
         {
-            var msgs = new StringBuilder();
-            var returnValue = 0;
-            var dt = new DataTable();
             try
             {
+                string json;
+                string error;
                 using (ApplicationDB appDb = IDORuntime.Context.CreateAppDB())
                 {
                     using (IDbCommand cmd = appDb.CreateCommand())
@@ -28,39 +32,27 @@ namespace QueryTool
 
                         using (IDataReader drOut = appDb.ExecuteReader(cmd))
                         {
-                            dt = ConvertDataReaderToDataTable(drOut);
+                            json = ResultSetJson.Serialize(drOut, out error);
                         }
                     }
                 }
 
-                string json = JsonConvert.SerializeObject(dt);
+                // Output carries whatever was read, even when a later statement failed.
                 Output = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+                if (error != null)
+                {
+                    Infobar = error;
+                    return 16;
+                }
 
-                Infobar = msgs.ToString();
-                return returnValue;
+                Infobar = string.Empty;
+                return 0;
             }
             catch (Exception ex)
             {
                 Infobar = ex.Message;
                 return 16;
             }
-        }
-
-        public DataTable ConvertDataReaderToDataTable(IDataReader reader)
-        {
-            DataTable dt = new DataTable();
-            int intFieldCount = reader.FieldCount;
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                dt.Columns.Add(reader.GetName(i), reader.GetFieldType(i));
-            }
-            while (reader.Read())
-            {
-                object[] values = new object[reader.FieldCount];
-                reader.GetValues(values);
-                dt.LoadDataRow(values, true);
-            }
-            return dt;
         }
     }
 }

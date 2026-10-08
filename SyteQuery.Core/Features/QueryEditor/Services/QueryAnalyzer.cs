@@ -14,21 +14,120 @@ public sealed class QueryAnalyzer : IQueryAnalyzer
         if (string.IsNullOrWhiteSpace(sql))
             return result;
 
-        var normalizedSql = NormalizeSql(sql);
+        // The script is analysed one statement at a time. Looking at the whole text as one query meant a TOP in
+        // one SELECT counted for every other SELECT in the script.
+        var batches = SqlScriptParser.Parse(sql);
+        if (batches.Count == 0)
+            return result; // nothing but GO lines and whitespace
 
-        // Check for missing WHERE clause
-        CheckMissingWhereClause(normalizedSql, result);
+        var totalStatements = batches.Sum(b => b.ParsedOk ? Math.Max(b.Statements.Count, 1) : 1);
+        var label = totalStatements > 1;
+        var number = 0;
+        var toRun = new List<string>();
+        var limitApplied = false;
 
-        // Check for SELECT *
-        CheckSelectStar(normalizedSql, result);
+        foreach (var batch in batches)
+        {
+            if (!batch.ParsedOk)
+            {
+                // ScriptDom couldn't parse it (a typo, or syntax it doesn't know): fall back to the text checks on
+                // the whole batch, so the warnings still appear and the server reports the real syntax error.
+                number++;
+                var legacy = new QueryAnalysisResult();
+                AnalyzeWholeText(batch.Text, legacy);
+                AddWarnings(result, legacy, label ? $"Statement {number}: " : "");
+                toRun.Add(legacy.ShouldEnforceLimit && legacy.ModifiedQuery is not null ? legacy.ModifiedQuery : batch.Text);
+                limitApplied |= legacy.ShouldEnforceLimit;
+                continue;
+            }
 
-        // Check for missing TOP/LIMIT - pass original SQL for modification
-        CheckMissingRowLimit(normalizedSql, sql, result);
+            var inserts = new List<int>();
+            var possibleResultSets = 0;
 
-        // Check for potentially expensive operations
-        CheckExpensiveOperations(normalizedSql, result);
+            foreach (var statement in batch.Statements)
+            {
+                number++;
+                var prefix = label ? $"Statement {number}: " : "";
 
+                if (statement.Results != StatementResults.None)
+                    possibleResultSets++;
+
+                if (statement.IsQuery)
+                {
+                    var normalized = NormalizeSql(statement.Text);
+                    var checks = new QueryAnalysisResult();
+                    CheckMissingWhereClause(normalized, checks);
+                    CheckSelectStar(normalized, checks);
+                    CheckExpensiveOperations(normalized, checks);
+                    AddWarnings(result, checks, prefix);
+
+                    if (statement.LimitInsertOffset is { } offset)
+                    {
+                        inserts.Add(offset);
+                        result.Warnings.Add(new QueryWarning
+                        {
+                            Severity = QueryWarningSeverity.Warning,
+                            Message = prefix + "Query has no row limit",
+                            Details = $"A TOP {DefaultRowLimit} limit will be automatically applied to prevent excessive data retrieval."
+                        });
+                    }
+                    else if (statement.SetOperationHasNoTop)
+                    {
+                        result.Warnings.Add(new QueryWarning
+                        {
+                            Severity = QueryWarningSeverity.Info,
+                            Message = prefix + "Row limit not applied",
+                            Details = "A UNION / EXCEPT / INTERSECT query can't be limited automatically. Add TOP to its SELECTs if it may return many rows."
+                        });
+                    }
+                }
+                else if (statement.DmlWithoutWhere is { } dml)
+                {
+                    result.Warnings.Add(new QueryWarning
+                    {
+                        Severity = QueryWarningSeverity.Warning,
+                        Message = prefix + $"{dml} has no WHERE clause",
+                        Details = $"This {dml} will affect every row of the table."
+                    });
+                }
+            }
+
+            // Apply from the back so earlier offsets stay valid.
+            var text = batch.Text;
+            foreach (var offset in inserts.OrderByDescending(o => o))
+                text = text.Insert(offset, $" TOP {DefaultRowLimit}");
+
+            limitApplied |= inserts.Count > 0;
+            toRun.Add(text);
+            result.ExtraResultSets += Math.Max(0, possibleResultSets - 1);
+        }
+
+        result.Batches = toRun;
+        result.ShouldEnforceLimit = limitApplied;
+        result.ModifiedQuery = limitApplied ? string.Join(Environment.NewLine + "GO" + Environment.NewLine, toRun) : null;
         return result;
+    }
+
+    private static void AnalyzeWholeText(string sql, QueryAnalysisResult result)
+    {
+        var normalizedSql = NormalizeSql(sql);
+        CheckMissingWhereClause(normalizedSql, result);
+        CheckSelectStar(normalizedSql, result);
+        CheckMissingRowLimit(normalizedSql, sql, result);
+        CheckExpensiveOperations(normalizedSql, result);
+    }
+
+    private static void AddWarnings(QueryAnalysisResult into, QueryAnalysisResult from, string prefix)
+    {
+        foreach (var warning in from.Warnings)
+        {
+            into.Warnings.Add(new QueryWarning
+            {
+                Severity = warning.Severity,
+                Message = prefix + warning.Message,
+                Details = warning.Details
+            });
+        }
     }
 
     private static string NormalizeSql(string sql)
@@ -70,7 +169,12 @@ public sealed class QueryAnalyzer : IQueryAnalyzer
     private static void CheckSelectStar(string sql, QueryAnalysisResult result)
     {
         // Check for SELECT *
-        var hasSelectStar = Regex.IsMatch(sql, @"\bSELECT\s+\*\b", RegexOptions.IgnoreCase);
+        // (An earlier pattern ended in \*\b, which can never match "SELECT * FROM": there is no word boundary
+        // between '*' and a space. Also allow DISTINCT / ALL / TOP n before the star.)
+        var hasSelectStar = Regex.IsMatch(
+            sql,
+            @"\bSELECT\s+(?:(?:DISTINCT|ALL)\s+)?(?:TOP\s*\(?\s*\d+\s*\)?\s+)?\*",
+            RegexOptions.IgnoreCase);
 
         if (hasSelectStar)
         {

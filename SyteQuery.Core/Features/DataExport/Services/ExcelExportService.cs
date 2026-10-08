@@ -3,6 +3,12 @@ using System.Globalization;
 
 namespace SyteQuery.Features.DataExport.Services;
 
+/// <summary>One worksheet of a multi-result export.</summary>
+/// <param name="Name">Sheet name (Excel allows 31 characters and none of []:*?/\).</param>
+/// <param name="Columns">Column headers, written even when there are no rows.</param>
+/// <param name="Rows">The rows.</param>
+public sealed record ExcelSheet(string Name, IReadOnlyList<string> Columns, List<Dictionary<string, object?>> Rows);
+
 public class ExcelExportService
 {
     public byte[] ExportToExcel(List<Dictionary<string, object?>> rows, string sheetName = "Results")
@@ -18,9 +24,54 @@ public class ExcelExportService
             return stream.ToArray();
         }
 
-        // Get column names from first row
-        var columns = rows[0].Keys.ToList();
+        WriteSheet(worksheet, rows[0].Keys.ToList(), rows);
 
+        // Convert to byte array
+        using var memoryStream = new MemoryStream();
+        workbook.SaveAs(memoryStream);
+        return memoryStream.ToArray();
+    }
+
+    /// <summary>One workbook, one sheet per result set - used when a command returned several.</summary>
+    public byte[] ExportToExcel(IReadOnlyList<ExcelSheet> sheets)
+    {
+        using var workbook = new XLWorkbook();
+
+        foreach (var sheet in sheets)
+        {
+            var worksheet = workbook.Worksheets.Add(SafeSheetName(sheet.Name, workbook));
+            WriteSheet(worksheet, sheet.Columns, sheet.Rows);
+        }
+
+        if (sheets.Count == 0)
+            workbook.Worksheets.Add("Results").Cell(1, 1).Value = "No data to export";
+
+        using var memoryStream = new MemoryStream();
+        workbook.SaveAs(memoryStream);
+        return memoryStream.ToArray();
+    }
+
+    private static string SafeSheetName(string name, XLWorkbook workbook)
+    {
+        var cleaned = new string(name.Where(c => "[]:*?/\\".IndexOf(c) < 0).ToArray()).Trim();
+        if (cleaned.Length == 0)
+            cleaned = "Results";
+        if (cleaned.Length > 31)
+            cleaned = cleaned[..31];
+
+        var candidate = cleaned;
+        var n = 2;
+        while (workbook.Worksheets.Contains(candidate))
+        {
+            var suffix = $" ({n++})";
+            candidate = cleaned[..Math.Min(cleaned.Length, 31 - suffix.Length)] + suffix;
+        }
+
+        return candidate;
+    }
+
+    private static void WriteSheet(IXLWorksheet worksheet, IReadOnlyList<string> columns, List<Dictionary<string, object?>> rows)
+    {
         // Write headers
         for (int i = 0; i < columns.Count; i++)
         {
@@ -84,11 +135,6 @@ public class ExcelExportService
 
         // Freeze header row
         worksheet.SheetView.FreezeRows(1);
-
-        // Convert to byte array
-        using var memoryStream = new MemoryStream();
-        workbook.SaveAs(memoryStream);
-        return memoryStream.ToArray();
     }
 
     private static string FormatCellValue(object? value)

@@ -52,6 +52,9 @@ public static class ServiceCollectionExtensions
         services.AddDataProtection().SetApplicationName("SyteQuery");
         services.AddScoped<IdoQueryService>();
 
+        // Which output format version each environment's query IDO last answered with (shared, in memory).
+        services.AddSingleton<IdoVersionRegistry>();
+
         // --- Environment Repository ---
         services.AddScoped<IUserEnvironmentRepository, UserEnvironmentRepository>();
 

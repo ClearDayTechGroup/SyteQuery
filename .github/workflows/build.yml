@@ -23,6 +23,9 @@ jobs:
       - name: Build
         run: dotnet build SyteQuery.Desktop/SyteQuery.Desktop.csproj --configuration Release --no-restore
 
+      - name: Test
+        run: dotnet test SyteQuery.Tests/SyteQuery.Tests.csproj --configuration Release
+
       - name: Check for vulnerable packages
         shell: pwsh
         run: |

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>SyteQuery.Tests</RootNamespace>
+    <!-- CS8625: the linked IDO file (ResultSetJson.cs) is written for the IDO project, where nullable
+         annotations aren't enabled, so "error = null" on a plain string out-parameter warns here. -->
+    <NoWarn>$(NoWarn);CS8625</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SyteQuery.Core\SyteQuery.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The IDO's result serializer is plain C# with no SyteLine types, so it is compiled into this
+      project and tested here - the IDO project itself needs Infor's assemblies, which CI doesn't have.
+    -->
+    <Compile Include="..\SyteQuery.IDO\ResultSetJson.cs" Link="ResultSetJson.cs" />
+  </ItemGroup>
+
+</Project>

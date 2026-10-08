@@ -95,8 +95,10 @@ public interface IEnvironmentSessionManager
 /// <summary>Outcome of <see cref="IEnvironmentSessionManager.ValidateQueryIdoAsync"/>.</summary>
 /// <param name="Ok">True when a test query ran through the IDO and returned data.</param>
 /// <param name="Problem">When not OK, a message that says what to fix.</param>
-public sealed record IdoValidationResult(bool Ok, string? Problem)
+/// <param name="Warning">When OK but worth knowing (for example the IDO is an older version), a message for the user. Never blocks.</param>
+public sealed record IdoValidationResult(bool Ok, string? Problem, string? Warning = null)
 {
     public static IdoValidationResult Success() => new(true, null);
+    public static IdoValidationResult SuccessWithWarning(string warning) => new(true, null, warning);
     public static IdoValidationResult Failure(string problem) => new(false, problem);
 }
