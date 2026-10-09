@@ -85,6 +85,12 @@ public interface IEnvironmentSessionManager
     Task<bool> CanAuthenticateAsync(string envId, CancellationToken ct = default);
 
     /// <summary>
+    /// Same check as <see cref="CanAuthenticateAsync"/>, but says why when it fails: wrong credentials, the
+    /// server not answering the token request, or the token not being accepted.
+    /// </summary>
+    Task<AuthCheckResult> CheckAuthenticationAsync(string envId, CancellationToken ct = default);
+
+    /// <summary>
     /// Verifies that the environment's configured query IDO actually works, end to end, by running a
     /// harmless <c>SELECT 1</c> through its <c>ExecuteQuery</c> method. Returns a specific, actionable
     /// problem when it doesn't (IDO name not found, method missing or misconfigured, no data returned).
@@ -92,6 +98,15 @@ public interface IEnvironmentSessionManager
     Task<IdoValidationResult> ValidateQueryIdoAsync(string envId, CancellationToken ct = default);
 
 }
+/// <summary>Outcome of <see cref="IEnvironmentSessionManager.CheckAuthenticationAsync"/>.</summary>
+/// <param name="Ok">True when a token was obtained and SyteLine accepted it.</param>
+/// <param name="Problem">When not OK, why. Never contains the password.</param>
+public sealed record AuthCheckResult(bool Ok, string? Problem)
+{
+    public static AuthCheckResult Success() => new(true, null);
+    public static AuthCheckResult Failure(string problem) => new(false, problem);
+}
+
 /// <summary>Outcome of <see cref="IEnvironmentSessionManager.ValidateQueryIdoAsync"/>.</summary>
 /// <param name="Ok">True when a test query ran through the IDO and returned data.</param>
 /// <param name="Problem">When not OK, a message that says what to fix.</param>

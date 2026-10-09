@@ -92,6 +92,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
             Config = env.ConfigName,
             User = env.Username,
             IdoName = env.IdoName,
+            TokenMode = Enum.IsDefined(typeof(IdoTokenMode), env.TokenMode) ? (IdoTokenMode)env.TokenMode : IdoTokenMode.Auto,
             Password = repository.DecryptPassword(env.EncryptedPassword),
             IsConnected = false
         };
@@ -118,6 +119,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
             Url = profile.Url,
             ConfigName = profile.Config,
             IdoName = profile.IdoName,
+            TokenMode = (int)profile.TokenMode,
             Username = profile.User,
             EncryptedPassword = repository.EncryptPassword(profile.Password)
         };
@@ -149,6 +151,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
         existing.Url = updatedProfile.Url;
         existing.ConfigName = updatedProfile.Config;
         existing.IdoName = updatedProfile.IdoName;
+        existing.TokenMode = (int)updatedProfile.TokenMode;
         existing.Username = updatedProfile.User;
         existing.EncryptedPassword = repository.EncryptPassword(updatedProfile.Password);
 
@@ -252,7 +255,7 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
         if (_tokenCache.TryGetValue(key, out var cachedToken))
             return cachedToken;
 
-        var result = await _idoHttpClient.GetTokenAsync(profile.Url, profile.Config, profile.User, profile.Password, ct);
+        var result = await _idoHttpClient.GetTokenAsync(profile.Url, profile.Config, profile.User, profile.Password, profile.TokenMode, ct);
         if (!result.Success || string.IsNullOrEmpty(result.Token))
         {
             throw new InvalidOperationException(
@@ -385,18 +388,26 @@ public sealed class DatabaseEnvironmentSessionManager : BaseAuthenticatedService
     // ------------------------------------------------------------
 
     public async Task<bool> CanAuthenticateAsync(string envId, CancellationToken ct = default)
+        => (await CheckAuthenticationAsync(envId, ct)).Ok;
+
+    public async Task<AuthCheckResult> CheckAuthenticationAsync(string envId, CancellationToken ct = default)
     {
         try
         {
             return await UseSessionAsync(envId, async (url, token) =>
             {
                 var result = await _idoHttpClient.LoadCollectionAsync(url, token, "SLItems", properties: "Item", recordCap: 1, ct: ct);
-                return result.Success;
+                return result.Success
+                    ? AuthCheckResult.Success()
+                    : AuthCheckResult.Failure(
+                        "SyteLine gave a security token but wouldn't read from it: " +
+                        (string.IsNullOrWhiteSpace(result.Message) ? "no details were returned." : result.Message));
             }, ct);
         }
-        catch
+        catch (Exception ex)
         {
-            return false;
+            // Asking for the token failing lands here, with the reason (which token requests were tried and what came back).
+            return AuthCheckResult.Failure(ex.Message);
         }
     }
 

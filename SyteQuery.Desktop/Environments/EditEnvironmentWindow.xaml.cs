@@ -26,6 +26,7 @@ public partial class EditEnvironmentWindow : Window
         UrlBox.Text = original.Url;
         ConfigBox.Text = original.Config;
         IdoNameBox.Text = original.IdoName;
+        TokenModeBox.SelectedIndex = (int)original.TokenMode;
         UsernameBox.Text = original.User;
     }
 
@@ -55,6 +56,7 @@ public partial class EditEnvironmentWindow : Window
             Url = UrlBox.Text.Trim(),
             Config = ConfigBox.Text.Trim(),
             IdoName = IdoNameBox.Text.Trim(),
+            TokenMode = (IdoTokenMode)Math.Max(0, TokenModeBox.SelectedIndex),
             User = UsernameBox.Text.Trim(),
             Password = string.IsNullOrEmpty(PasswordBox.Password) ? _original.Password : PasswordBox.Password
         };
@@ -70,7 +72,8 @@ public partial class EditEnvironmentWindow : Window
                 updated.Config != _original.Config ||
                 updated.User != _original.User ||
                 updated.Password != _original.Password ||
-                updated.IdoName != _original.IdoName;
+                updated.IdoName != _original.IdoName ||
+                updated.TokenMode != _original.TokenMode;
 
             if (connectionChanged)
             {

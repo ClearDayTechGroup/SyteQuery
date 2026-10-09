@@ -42,6 +42,12 @@ public sealed class EnvProfile
     public string IdoName { get; set; } = string.Empty;
 
     /// <summary>
+    /// How to ask SyteLine for a security token: Automatic (the default), or only ever with the credentials
+    /// in the URL, or only in HTTP headers. Infor offers both and some environments accept just one.
+    /// </summary>
+    public IdoTokenMode TokenMode { get; set; } = IdoTokenMode.Auto;
+
+    /// <summary>
     /// Indicates whether this environment is currently connected.
     /// </summary>
     public bool IsConnected { get; set; }

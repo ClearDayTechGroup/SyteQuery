@@ -65,6 +65,9 @@ public static class ServiceCollectionExtensions
         // Warning), but anyone raising the level while debugging would have written the password
         // to their logs. This client never needs that logging - IdoHttpClient logs its own
         // failures, without credentials.
+        // The client asks for a token in whichever of Infor's two forms works for the environment (credentials in
+        // the URL, or in headers); this remembers which one did.
+        services.AddSingleton<IdoTokenStyleMemory>();
         services.AddHttpClient<IIdoHttpClient, IdoHttpClient>().RemoveAllLoggers();
 
         // --- Multi-environment session manager (Database-backed) ---

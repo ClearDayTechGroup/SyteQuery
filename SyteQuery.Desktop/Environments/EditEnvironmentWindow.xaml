@@ -1,11 +1,12 @@
 <Window x:Class="SyteQuery.Desktop.Environments.EditEnvironmentWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Edit Environment" Height="420" Width="480"
+        Title="Edit Environment" Height="465" Width="480"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False">
     <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -60,9 +61,16 @@
         <TextBlock Grid.Row="6" Grid.Column="1" Text="(leave blank to keep the current password)"
                    FontStyle="Italic" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" Margin="0,0,0,4" />
 
-        <TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ErrorText" Margin="0,4" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCriticalBrush}" VerticalAlignment="Top" />
+        <TextBlock Grid.Row="7" Grid.Column="0" Text="Sign-in" VerticalAlignment="Center" Margin="0,4" />
+        <ComboBox Grid.Row="7" Grid.Column="1" x:Name="TokenModeBox" Margin="0,4" SelectedIndex="0"
+                  ToolTip="How SyteQuery asks SyteLine for a security token. Infor offers two forms - credentials in the URL, or in HTTP headers - and a few environments accept only one. Leave this on Automatic unless sign-in fails for an environment you know is set up correctly.">
+            <ComboBoxItem Content="Automatic (recommended)" />
+            <ComboBoxItem Content="Credentials in the URL" />
+            <ComboBoxItem Content="Credentials in HTTP headers" />
+        </ComboBox>
+        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ErrorText" Margin="0,4" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCriticalBrush}" VerticalAlignment="Top" />
 
-        <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+        <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
             <Button x:Name="SaveButton" Content="Save" Width="80" Margin="0,0,8,0" Click="OnSaveClick" IsDefault="True" />
             <Button x:Name="CancelButton" Content="Cancel" Width="80" Click="OnCancelClick" IsCancel="True" />
         </StackPanel>

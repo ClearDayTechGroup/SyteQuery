@@ -52,6 +52,7 @@ public partial class AddEnvironmentWindow : Window
             Url = UrlBox.Text.Trim(),
             Config = ConfigBox.Text.Trim(),
             IdoName = IdoNameBox.Text.Trim(),
+            TokenMode = (IdoTokenMode)Math.Max(0, TokenModeBox.SelectedIndex),
             User = UsernameBox.Text.Trim(),
             Password = PasswordBox.Password
         };
@@ -62,9 +63,9 @@ public partial class AddEnvironmentWindow : Window
             await _envMgr.AddAsync(_profile);
 
             StatusText.Text = "Testing credentials...";
-            var canAuth = await _envMgr.CanAuthenticateAsync(_profile.Id);
-            if (!canAuth)
-                throw new InvalidOperationException("Authentication failed. Please check your credentials.");
+            var auth = await _envMgr.CheckAuthenticationAsync(_profile.Id);
+            if (!auth.Ok)
+                throw new InvalidOperationException(auth.Problem ?? "Authentication failed. Please check your credentials.");
 
             // The IDO is created by hand in SyteLine (see SyteQuery.IDO/README.md), so check it end to end: it has to
             // exist, have its assembly bound, expose ExecuteQuery, and actually return rows.

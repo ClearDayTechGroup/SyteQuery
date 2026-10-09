@@ -14,6 +14,10 @@ public class UserEnvironmentDb
     /// SyteLine - see SyteQuery.IDO/README.md). Existing rows were migrated to "ue_RC_QueryTool".</summary>
     public string IdoName { get; set; } = string.Empty;
 
+    /// <summary>How the security token is requested - an <c>IdoTokenMode</c> value (0 = automatic, 1 = credentials in
+    /// the URL, 2 = in headers). Existing rows are 0.</summary>
+    public int TokenMode { get; set; }
+
     public string EncryptedPassword { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ModifiedAt { get; set; }
