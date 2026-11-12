@@ -171,7 +171,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         model.ResultsReady += result =>
         {
             if (ReferenceEquals(model, ActiveQueryEditor))
+            {
                 ResultsGridViewModel.SetResults(result);
+
+                // Running a query means you want to see what came back, even if the Results panel was closed.
+                if (!ResultsPanel.IsVisible)
+                    ResultsPanel.Show();
+            }
         };
         model.SnippetSaved += () => _ = SnippetsPanelViewModel.RefreshAsync();
         model.HistoryRecorded += () => _ = HistoryPanelViewModel.RefreshAsync();
@@ -223,6 +229,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private void OnNewQueryClick(object sender, RoutedEventArgs e) => OpenQueryTab();
+
+    // ------------------------------------------------------------
+    // Panels (View menu)
+    // ------------------------------------------------------------
+
+    /// <summary>The dockable panels by the name their View menu item carries in its Tag.</summary>
+    private LayoutAnchorable? PanelFor(string? name) => name switch
+    {
+        "ObjectExplorer" => ObjectExplorerPanel,
+        "Results" => ResultsPanel,
+        "Messages" => MessagesPanel,
+        "Snippets" => SnippetsPanel,
+        "History" => HistoryPanel,
+        _ => null
+    };
+
+    private IEnumerable<LayoutAnchorable> AllPanels =>
+        new[] { ObjectExplorerPanel, ResultsPanel, MessagesPanel, SnippetsPanel, HistoryPanel };
+
+    /// <summary>
+    /// Closing a panel with its X only hides it, and the menu is the way back: a ticked item is a panel that is showing,
+    /// and clicking it hides it, clicking an unticked one shows it again where it was.
+    /// </summary>
+    private void OnPanelMenuClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string name } && PanelFor(name) is { } panel)
+        {
+            if (panel.IsVisible)
+            {
+                panel.Hide();
+            }
+            else
+            {
+                panel.Show();
+                panel.IsActive = true;
+            }
+        }
+
+        UpdatePanelMenuChecks();
+    }
+
+    private void OnShowAllPanelsClick(object sender, RoutedEventArgs e)
+    {
+        foreach (var panel in AllPanels.Where(p => !p.IsVisible))
+            panel.Show();
+
+        UpdatePanelMenuChecks();
+    }
+
+    private void OnViewMenuOpened(object sender, RoutedEventArgs e)
+    {
+        // SubmenuOpened bubbles up from the Theme submenu too; only react to the View menu itself.
+        if (ReferenceEquals(e.OriginalSource, ViewMenu))
+            UpdatePanelMenuChecks();
+    }
+
+    private void UpdatePanelMenuChecks()
+    {
+        PanelObjectExplorerItem.IsChecked = ObjectExplorerPanel.IsVisible;
+        PanelResultsItem.IsChecked = ResultsPanel.IsVisible;
+        PanelMessagesItem.IsChecked = MessagesPanel.IsVisible;
+        PanelSnippetsItem.IsChecked = SnippetsPanel.IsVisible;
+        PanelHistoryItem.IsChecked = HistoryPanel.IsVisible;
+    }
 
     // ------------------------------------------------------------
     // Menu

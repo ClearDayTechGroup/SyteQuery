@@ -28,6 +28,9 @@
       project and tested here - the IDO project itself needs Infor's assemblies, which CI doesn't have.
     -->
     <Compile Include="..\SyteQuery.IDO\ResultSetJson.cs" Link="ResultSetJson.cs" />
+
+    <!-- Likewise the results grid's clipboard text builder: plain C# in the WPF project, no WPF types. -->
+    <Compile Include="..\SyteQuery.Desktop\Results\ResultsClipboard.cs" Link="ResultsClipboard.cs" />
   </ItemGroup>
 
 </Project>

@@ -98,6 +98,10 @@
                   IsReadOnly="True"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
+                  SelectionUnit="Cell"
+                  SelectionMode="Extended"
+                  ClipboardCopyMode="ExcludeHeader"
+                  PreviewMouseRightButtonDown="OnGridRightClick"
                   HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal"
                   HorizontalGridLinesBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
@@ -110,7 +114,19 @@
                   EnableColumnVirtualization="True"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"
-                  VirtualizingPanel.ScrollUnit="Pixel" />
+                  VirtualizingPanel.ScrollUnit="Pixel">
+            <!-- Select a cell (click) or a block (drag, Shift or Ctrl-click) and Ctrl+C, or right-click. -->
+            <DataGrid.ContextMenu>
+                <ContextMenu Opened="OnGridContextMenuOpened">
+                    <MenuItem x:Name="CopyCellsItem" Header="_Copy" InputGestureText="Ctrl+C" Click="OnCopyClick" />
+                    <MenuItem x:Name="CopyWithHeadersItem" Header="Copy with _headers" Click="OnCopyWithHeadersClick" />
+                    <MenuItem x:Name="CopyRowsItem" Header="Copy _row(s)" ToolTip="Every column of the rows you have selected cells in" Click="OnCopyRowsClick" />
+                    <MenuItem x:Name="CopyColumnItem" Header="Copy col_umn" ToolTip="Every value in the column you right-clicked" Click="OnCopyColumnClick" />
+                    <Separator />
+                    <MenuItem x:Name="SelectAllItem" Header="Select _all" InputGestureText="Ctrl+A" Click="OnSelectAllClick" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
 
             <!-- Shown instead of an empty grid when the last query failed. -->
             <Border Visibility="{Binding ShowErrorOverlay, Converter={StaticResource ResultsBoolToVis}}"

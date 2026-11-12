@@ -253,10 +253,15 @@
                 <MenuItem Header="_Format Query" IsEnabled="False" />
                 <MenuItem Header="_Comment Selection" IsEnabled="False" />
             </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_Object Explorer" IsEnabled="False" />
-                <MenuItem Header="_Results" IsEnabled="False" />
-                <MenuItem Header="_Messages" IsEnabled="False" />
+            <MenuItem x:Name="ViewMenu" Header="_View" SubmenuOpened="OnViewMenuOpened">
+                <!-- Closing a panel only hides it; these bring it back. Ticked = currently shown. -->
+                <MenuItem x:Name="PanelObjectExplorerItem" Header="_Object Explorer" Tag="ObjectExplorer" Click="OnPanelMenuClick" />
+                <MenuItem x:Name="PanelResultsItem" Header="_Results" Tag="Results" Click="OnPanelMenuClick" />
+                <MenuItem x:Name="PanelMessagesItem" Header="_Messages" Tag="Messages" Click="OnPanelMenuClick" />
+                <MenuItem x:Name="PanelSnippetsItem" Header="_Snippets" Tag="Snippets" Click="OnPanelMenuClick" />
+                <MenuItem x:Name="PanelHistoryItem" Header="_History" Tag="History" Click="OnPanelMenuClick" />
+                <Separator />
+                <MenuItem Header="Show _All Panels" Click="OnShowAllPanelsClick" />
                 <Separator />
                 <MenuItem Header="_Theme">
                     <MenuItem x:Name="ThemeSystemItem" Header="_System default" Tag="System" Click="OnThemeClick" />
@@ -274,6 +279,20 @@
                 <MenuItem Header="_About SyteQuery..." Click="OnAboutClick" />
             </MenuItem>
         </Menu>
+
+        <!-- Quick actions. New Query is the one people reach for most, so it shouldn't live only in a menu. -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource PanelToolbarBorder}">
+            <StackPanel Orientation="Horizontal">
+                <Button Click="OnNewQueryClick" Padding="12,5" AutomationProperties.Name="New Query"
+                        ToolTip="New query (Ctrl+N)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13"
+                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="New Query" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
 
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Style="{StaticResource PanelStatusBorder}">
@@ -294,7 +313,7 @@
                 <avalonDock:LayoutPanel Orientation="Horizontal">
 
                     <avalonDock:LayoutAnchorablePane DockWidth="280">
-                        <avalonDock:LayoutAnchorable Title="Object Explorer" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="ObjectExplorerPanel" ContentId="ObjectExplorer" Title="Object Explorer" CanClose="False" CanAutoHide="True">
                             <DockPanel LastChildFill="True" DataContext="{Binding ObjectExplorerViewModel, RelativeSource={RelativeSource AncestorType=Window}}">
 
                                 <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6" LastChildFill="True">
@@ -329,11 +348,11 @@
                         <avalonDock:LayoutDocumentPane x:Name="DocumentPane" />
 
                         <avalonDock:LayoutAnchorablePane DockHeight="220">
-                            <avalonDock:LayoutAnchorable Title="Results" CanClose="False" CanAutoHide="True">
+                            <avalonDock:LayoutAnchorable x:Name="ResultsPanel" ContentId="Results" Title="Results" CanClose="False" CanAutoHide="True">
                                 <results:ResultsGridView
                                     DataContext="{Binding ResultsGridViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                             </avalonDock:LayoutAnchorable>
-                            <avalonDock:LayoutAnchorable Title="Messages" CanClose="False" CanAutoHide="True">
+                            <avalonDock:LayoutAnchorable x:Name="MessagesPanel" ContentId="Messages" Title="Messages" CanClose="False" CanAutoHide="True">
                                 <ListBox Margin="4" BorderThickness="0" Background="Transparent"
                                     ItemContainerStyle="{DynamicResource CompactListBoxItem}"
                                     DataContext="{Binding ActiveQueryEditor, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -363,11 +382,11 @@
                     </avalonDock:LayoutPanel>
 
                     <avalonDock:LayoutAnchorablePane DockWidth="240">
-                        <avalonDock:LayoutAnchorable Title="Snippets" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="SnippetsPanel" ContentId="Snippets" Title="Snippets" CanClose="False" CanAutoHide="True">
                             <snippets:SnippetsPanelView
                                 DataContext="{Binding SnippetsPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                         </avalonDock:LayoutAnchorable>
-                        <avalonDock:LayoutAnchorable Title="History" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="HistoryPanel" ContentId="History" Title="History" CanClose="False" CanAutoHide="True">
                             <history:HistoryPanelView
                                 DataContext="{Binding HistoryPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                         </avalonDock:LayoutAnchorable>

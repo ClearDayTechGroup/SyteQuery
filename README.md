@@ -26,11 +26,13 @@ Browse every table, view, stored procedure and function across your environments
 
 **Results**
 - A native, **virtualized grid** that stays smooth on large result sets, with quick search across all columns and export to **Excel, CSV and JSON**.
+- **Copy what you need**: click a cell or drag a block, then `Ctrl+C` (or right-click) to copy it as text that pastes straight into Excel. The right-click menu also has *Copy with headers*, *Copy row(s)* and *Copy column*.
 - **Several result sets at once**: a command that returns more than one shows them as tabs above the grid. If a later statement fails, the earlier results stay visible under the error. Excel export writes every result set to its own sheet.
 
 **Built for daily use**
 - **Multiple environments**, each with its own credentials, switchable per query tab.
 - Credentials are encrypted with Windows DPAPI (per user, per machine) — nothing is stored in plain text and no keys live in the app or its config.
+- A **New Query** button (or `Ctrl+N`), and dockable panels you can close and bring back from the **View** menu.
 - Windows 11 look with **light / dark / follow-Windows** themes, an installer, and in-app update checks.
 - Everything is stored locally in a SQLite database under `%LOCALAPPDATA%\SyteQuery`. No account, no sign-in, no cloud service, no telemetry.
 
