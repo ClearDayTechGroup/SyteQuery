@@ -17,7 +17,7 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 | Microsoft.SqlServer.TransactSql.ScriptDom | 170.147.0 | MIT | https://github.com/microsoft/SqlScriptDOM |
 | Newtonsoft.Json | 13.0.3 | MIT | https://www.newtonsoft.com/json |
 | SQLitePCLRaw.bundle_e_sqlite3 | 2.1.13 | Apache-2.0 |  |
-| System.Security.Cryptography.Xml | 9.0.20 | MIT | https://dot.net/ |
+| System.Security.Cryptography.Xml | 9.0.21 | MIT | https://dot.net/ |
 | Velopack | 1.2.161 | MIT | https://github.com/velopack/velopack |
 
 ## All packages (including transitive)
@@ -84,8 +84,8 @@ SyteQuery is MIT licensed (see [LICENSE](LICENSE)). It is built on the open-sour
 | System.Diagnostics.EventLog | 9.0.0 | MIT |
 | System.IO.Packaging | 8.0.1 | MIT |
 | System.Memory | 4.5.3 | https://github.com/dotnet/corefx/blob/master/LICENSE.TXT |
-| System.Security.Cryptography.Pkcs | 9.0.20 | MIT |
-| System.Security.Cryptography.Xml | 9.0.20 | MIT |
+| System.Security.Cryptography.Pkcs | 9.0.21 | MIT |
+| System.Security.Cryptography.Xml | 9.0.21 | MIT |
 | System.Text.Json | 9.0.0 | MIT |
 | Velopack | 1.2.161 | MIT |
 

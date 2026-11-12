@@ -253,7 +253,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // environments were added, removed or had their connection changed.
         var before = _envMgr.Profiles.ToDictionary(p => p.Id, p => (p.Url, p.Config, p.User));
 
-        var dialog = new EnvironmentsWindow(_envMgr, _metadataCache) { Owner = this };
+        var dialog = new EnvironmentsWindow(_envMgr, _metadataCache, _services.GetRequiredService<SyteQuery.Features.DatabaseQuery.Services.IdoQueryService>()) { Owner = this };
         dialog.ShowDialog();
 
         var after = _envMgr.Profiles.ToDictionary(p => p.Id, p => (p.Url, p.Config, p.User));

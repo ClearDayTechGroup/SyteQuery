@@ -147,7 +147,7 @@ This only maps paths **inside the project folder**, so build in place (don't red
 1. **Install the assembly (DLL and PDB).** Open the **IDO Extension Class Assemblies** form and add a new assembly record (for example `ue_QueryTool`, *Access As* `ue_`). Upload **both** the compiled `SyteQuery.IDO.dll` and its `SyteQuery.IDO.pdb` (SyteLine requires the pair). Save.
 2. **Create a new IDO and bind the assembly to it.** We recommend a new, dedicated IDO rather than adding the method to an existing one. In the **IDOs** form, create the IDO (for example `ue_QueryTool`) using the [reference settings](#reference-settings), and on its extension-class setup bind the assembly from step 1 with namespace `QueryTool` and class `QueryTool`.
 3. **Set up the `ExecuteQuery` IDO method.** On the new IDO, add a method named **`ExecuteQuery`** (extension-class method) with the three parameters from the [contract](#1-what-sytequery-expects-the-contract), in order: `InputCommand` (input), `Output` (output), `Infobar` (input, output, message).
-4. **Save and reload.** Save the IDO, then reload the IDO metadata (or recycle the application pool) so the new IDO is picked up.
+4. **Save and reload.** Save the IDO, then reload the IDO metadata (or recycle the application pool) so the new IDO is picked up. SyteLine can keep running an assembly it loaded earlier until this happens, so **uploading a new DLL is not the same as SyteLine running it**. To see what SyteLine is running right now, select the environment in **Tools → Environments** and click **Check IDO**: it runs a harmless two-`SELECT` test command through the IDO and reports whether it is the current IDO or the original one.
 5. **Grant access.** Authorize only the users or groups that should be able to run it (see [Security](#2-security--read-this-before-installing)).
 6. **Add the environment in SyteQuery.** *Tools → Environments → Add* — enter the URL, configuration, credentials, and the **IDO name** from step 2. SyteQuery runs its end-to-end check and tells you if anything is wrong.
 
@@ -165,6 +165,8 @@ What SyteQuery says, and what to look at:
 | *answered with an error instead of data: …* | The method ran and reported a failure in `Infobar` — the text is the underlying error (often a SQL or permissions problem). |
 | *returned data SyteQuery couldn't read* / *returned data, but not the rows SyteQuery expected* | `Output` isn't in the [output format](#output-format) (or its base64), or the test query didn't come back with an `ok` column. |
 | *The IDO … works, but it is an older version* | Not an error. The IDO is the original version and returns only the first result set. Install the updated IDO to see them all. |
+| *Check IDO* (or a query) still says "older version" after you uploaded the new DLL and PDB | SyteLine is still running the assembly it loaded before. Re-save the IDO and reload the IDO metadata, or recycle the application pool (in a cloud tenant, whatever your tenant uses to refresh the IDO runtime), then click **Check IDO** again. |
+| *Check IDO*: "the current query IDO is running, but only one of the test command's two result sets came back" | The new code is running but SyteLine's database layer isn't passing the second result set on. Please open an issue with your SyteLine version. |
 | *…results in format version N, but this version of SyteQuery understands up to…* | The IDO is newer than your SyteQuery. Update SyteQuery. |
 | Authentication failed | Not an IDO problem — check URL, configuration, user and password. |
 

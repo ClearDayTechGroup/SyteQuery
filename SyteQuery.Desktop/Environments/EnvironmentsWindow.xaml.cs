@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using SyteQuery.Features.DatabaseQuery.Services;
 using SyteQuery.Features.Environments.Services;
 using SyteQuery.Features.Metadata.Services;
 
@@ -19,13 +20,15 @@ public partial class EnvironmentsWindow : Window
 {
     private readonly IEnvironmentSessionManager _envMgr;
     private readonly IMetadataCache _metadataCache;
+    private readonly IdoQueryService _queryService;
 
     public ObservableCollection<EnvProfile> Items { get; } = new();
 
-    public EnvironmentsWindow(IEnvironmentSessionManager envMgr, IMetadataCache metadataCache)
+    public EnvironmentsWindow(IEnvironmentSessionManager envMgr, IMetadataCache metadataCache, IdoQueryService queryService)
     {
         _envMgr = envMgr;
         _metadataCache = metadataCache;
+        _queryService = queryService;
         InitializeComponent();
         DataContext = this;
 
@@ -51,6 +54,34 @@ public partial class EnvironmentsWindow : Window
         var hasSelection = Grid.SelectedItem is EnvProfile;
         EditButton.IsEnabled = hasSelection;
         RemoveButton.IsEnabled = hasSelection;
+        CheckIdoButton.IsEnabled = hasSelection;
+        CheckIdoText.Text = "";
+    }
+
+    /// <summary>
+    /// Asks the selected environment's query IDO to identify itself, by running a harmless two-SELECT test command
+    /// through it. It shows what SyteLine is running right now - which is not necessarily what was last installed.
+    /// </summary>
+    private async void OnCheckIdoClick(object sender, RoutedEventArgs e)
+    {
+        if (Grid.SelectedItem is not EnvProfile selected)
+            return;
+
+        CheckIdoButton.IsEnabled = false;
+        CheckIdoText.Text = $"Checking the query IDO for {selected.Name}...";
+        try
+        {
+            var probe = await _queryService.ProbeIdoAsync(selected.Id);
+            CheckIdoText.Text = $"{selected.Name}: {probe.Summary}";
+        }
+        catch (Exception ex)
+        {
+            CheckIdoText.Text = $"{selected.Name}: couldn't check the IDO: {ex.Message}";
+        }
+        finally
+        {
+            CheckIdoButton.IsEnabled = Grid.SelectedItem is EnvProfile;
+        }
     }
 
     private void OnGridDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

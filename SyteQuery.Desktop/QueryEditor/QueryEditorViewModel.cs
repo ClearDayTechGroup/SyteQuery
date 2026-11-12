@@ -262,13 +262,7 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
         if (analysis.ShouldEnforceLimit)
             AddMessage(QueryMessageLevel.Info, "Row limit automatically applied.");
 
-        // A script that looks like it returns several result sets, run against an IDO known to return only the first.
         var idoNoticeShown = false;
-        if (analysis.ExtraResultSets > 0 && _idoVersions.IsOutdated(_selectedEnvironmentId))
-        {
-            AddMessage(QueryMessageLevel.Warning, OutdatedIdoNotice);
-            idoNoticeShown = true;
-        }
 
         if (batches.Count > 1)
             AddMessage(QueryMessageLevel.Info, $"Running {batches.Count} batches (separated by GO). Each batch runs separately, so temp tables and variables don't carry over between them.");
@@ -283,6 +277,19 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
         string? errorMessage = null;
         try
         {
+            // A script that looks like it returns several result sets, for an environment remembered as having the
+            // older IDO. What is remembered may be out of date - the IDO may have been upgraded since - so ask the
+            // IDO again before warning, rather than warning from memory.
+            if (analysis.ExtraResultSets > 0 && _idoVersions.IsOutdated(_selectedEnvironmentId))
+            {
+                var probe = await _queryService.ProbeIdoAsync(_selectedEnvironmentId);
+                if (probe.Status == IdoStatus.Older)
+                {
+                    AddMessage(QueryMessageLevel.Warning, OutdatedIdoNotice);
+                    idoNoticeShown = true;
+                }
+            }
+
             var result = await _queryService.ExecuteBatchesAsync(_selectedEnvironmentId, batches, includeDebug: true);
             sw.Stop();
 
@@ -330,7 +337,8 @@ public sealed class QueryEditorViewModel : INotifyPropertyChanged, IDisposable
     private const string OutdatedIdoNotice =
         "This environment's query IDO is the older version, which returns only the first result set of each batch, " +
         "so results after the first are not shown. Ask your SyteLine administrator to install the updated IDO " +
-        "(see SyteQuery.IDO/README.md in the SyteQuery repository).";
+        "(see SyteQuery.IDO/README.md in the SyteQuery repository). If it has already been installed, SyteLine may " +
+        "still be running the old assembly until the IDO metadata is reloaded; use Tools > Environments > Check IDO to see what it is running now.";
 
     private static string DescribeResultSets(QueryExecutionResult result)
         => $"{result.ResultSets.Count} result set(s) ({string.Join(", ", result.ResultSets.Select(s => s.RowCount))} row(s))";

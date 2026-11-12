@@ -77,6 +77,47 @@ public sealed class IdoQueryService
         }
     }
 
+    /// <summary>The test command: harmless, two result sets, and the same on every SyteLine.</summary>
+    public const string ProbeCommand = "SELECT 1 AS probe_a; SELECT 2 AS probe_b;";
+
+    /// <summary>
+    /// Asks the environment's query IDO what it really is, by running <see cref="ProbeCommand"/> through it and
+    /// looking at the answer. That is the only reliable way to know: it reflects the code SyteLine is running right
+    /// now, not what was last installed, last seen or last saved (SyteLine can keep running an assembly it loaded
+    /// earlier until its IDO metadata is reloaded). The answer is also recorded, so what the app remembers about
+    /// the environment is refreshed.
+    /// </summary>
+    public async Task<IdoProbeResult> ProbeIdoAsync(string envId, CancellationToken ct = default)
+    {
+        var result = await ExecuteAsync(envId, ProbeCommand, ct: ct);
+
+        if (!result.Success)
+        {
+            return new IdoProbeResult(IdoStatus.Unreachable, result.IdoVersion,
+                $"Couldn't run the test command through the IDO: {result.Message}");
+        }
+
+        if (result.IdoVersion is null or < IdoVersion.MultipleResultSets)
+        {
+            return new IdoProbeResult(IdoStatus.Older, result.IdoVersion,
+                "The query IDO is the older version: it answered in the original format and returned only the first " +
+                "of the test command's two result sets. If you have already installed the new assembly, SyteLine is " +
+                "probably still running the old one - re-save the IDO and reload the IDO metadata (or recycle the " +
+                "application pool), then check again. See SyteQuery.IDO/README.md.");
+        }
+
+        if (result.ResultSets.Count < 2)
+        {
+            return new IdoProbeResult(IdoStatus.CurrentButOneResultSet, result.IdoVersion,
+                "The current query IDO is running (it answers in the new format), but only one of the test command's " +
+                "two result sets came back. The IDO asks the database for the next result set, so SyteLine's database " +
+                "layer may not be passing it on. Please report this on GitHub with your SyteLine version.");
+        }
+
+        return new IdoProbeResult(IdoStatus.Current, result.IdoVersion,
+            "The query IDO is current: it answers in the new format and returned both result sets of the test command.");
+    }
+
     /// <summary>
     /// Runs a script that was split into batches at GO lines, one call per batch, and combines the results:
     /// every batch's result sets, in order. Stops at the first batch that fails and returns what came before,
