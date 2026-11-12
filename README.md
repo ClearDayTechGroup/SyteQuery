@@ -71,7 +71,11 @@ Metadata (the object lists, columns, triggers) is read from SQL Server's catalog
 
 > **Prerequisite — set up the query IDO first.** SyteQuery can't connect to an environment until its query IDO has been compiled and installed in SyteLine (see [Setting up an environment](#setting-up-an-environment) below). Installing the app alone isn't enough: adding an environment fails its connection check until the IDO exists.
 
-There is no pre-built installer yet — SyteQuery is pre-release. For now, [build it from source](#build-from-source) and run it, or build the installer yourself with `./build/Build-Installer.ps1`, which produces `ClearDay.SyteQuery-win-Setup.exe` under `artifacts/releases/`. The installer installs per user (no administrator rights needed) and includes the .NET runtime. It isn't code-signed, so Windows SmartScreen may show an "unknown publisher" warning — choose *More info → Run anyway*.
+Download the latest `ClearDay.SyteQuery-win-Setup.exe` from [Releases](../../releases) and run it. It installs per user (no administrator rights needed) and the .NET runtime is included, so there is nothing else to install. Your data stays in `%LOCALAPPDATA%\SyteQuery` and is never touched by installing, updating or uninstalling. The installer isn't code-signed yet, so Windows SmartScreen may show an "unknown publisher" warning — choose *More info → Run anyway*.
+
+Prefer not to install? Each release also has a portable `ClearDay.SyteQuery-win-Portable.zip`: unzip it anywhere and run `SyteQuery.exe`. Or [build it from source](#build-from-source).
+
+**Updates:** an installed copy checks for new releases from **Help → Check for Updates**, and installs them with a restart. The portable zip and source builds don't update themselves; download the new release or pull the latest source. Each release's notes say whether the query IDO changed, in which case have your SyteLine administrator install the new one (see [`SyteQuery.IDO/README.md`](SyteQuery.IDO/README.md)).
 
 ### Setting up an environment
 
