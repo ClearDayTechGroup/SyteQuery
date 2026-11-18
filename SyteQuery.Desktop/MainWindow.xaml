@@ -313,7 +313,7 @@
                 <avalonDock:LayoutPanel Orientation="Horizontal">
 
                     <avalonDock:LayoutAnchorablePane DockWidth="280">
-                        <avalonDock:LayoutAnchorable x:Name="ObjectExplorerPanel" ContentId="ObjectExplorer" Title="Object Explorer" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="ObjectExplorerPanel" ContentId="ObjectExplorer" Title="Object Explorer" CanClose="False" CanAutoHide="True" AutoHideWidth="280">
                             <DockPanel LastChildFill="True" DataContext="{Binding ObjectExplorerViewModel, RelativeSource={RelativeSource AncestorType=Window}}">
 
                                 <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6" LastChildFill="True">
@@ -348,11 +348,11 @@
                         <avalonDock:LayoutDocumentPane x:Name="DocumentPane" />
 
                         <avalonDock:LayoutAnchorablePane DockHeight="220">
-                            <avalonDock:LayoutAnchorable x:Name="ResultsPanel" ContentId="Results" Title="Results" CanClose="False" CanAutoHide="True">
+                            <avalonDock:LayoutAnchorable x:Name="ResultsPanel" ContentId="Results" Title="Results" CanClose="False" CanAutoHide="True" AutoHideHeight="220">
                                 <results:ResultsGridView
                                     DataContext="{Binding ResultsGridViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                             </avalonDock:LayoutAnchorable>
-                            <avalonDock:LayoutAnchorable x:Name="MessagesPanel" ContentId="Messages" Title="Messages" CanClose="False" CanAutoHide="True">
+                            <avalonDock:LayoutAnchorable x:Name="MessagesPanel" ContentId="Messages" Title="Messages" CanClose="False" CanAutoHide="True" AutoHideHeight="220">
                                 <ListBox Margin="4" BorderThickness="0" Background="Transparent"
                                     ItemContainerStyle="{DynamicResource CompactListBoxItem}"
                                     DataContext="{Binding ActiveQueryEditor, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -382,11 +382,11 @@
                     </avalonDock:LayoutPanel>
 
                     <avalonDock:LayoutAnchorablePane DockWidth="240">
-                        <avalonDock:LayoutAnchorable x:Name="SnippetsPanel" ContentId="Snippets" Title="Snippets" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="SnippetsPanel" ContentId="Snippets" Title="Snippets" CanClose="False" CanAutoHide="True" AutoHideWidth="240">
                             <snippets:SnippetsPanelView
                                 DataContext="{Binding SnippetsPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                         </avalonDock:LayoutAnchorable>
-                        <avalonDock:LayoutAnchorable x:Name="HistoryPanel" ContentId="History" Title="History" CanClose="False" CanAutoHide="True">
+                        <avalonDock:LayoutAnchorable x:Name="HistoryPanel" ContentId="History" Title="History" CanClose="False" CanAutoHide="True" AutoHideWidth="240">
                             <history:HistoryPanelView
                                 DataContext="{Binding HistoryPanelViewModel, RelativeSource={RelativeSource AncestorType=Window}}" />
                         </avalonDock:LayoutAnchorable>
